@@ -44,7 +44,7 @@
             padding-top: 0.6rem;
             padding-bottom: 0.6rem;
         }
-        /* Styles for the calculator */
+        /* Calculator Styles */
         .calculator-btn {
             padding: 6px 12px;
             border: 1px solid #d1d5db;
@@ -61,10 +61,42 @@
             background-color: #3b82f6;
             color: #ffffff;
         }
+        /* Login Screen Styles */
+        #login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
-    <div class="container mx-auto max-w-lg py-6 px-4">
+
+    <!-- Login Screen -->
+    <div id="login-screen">
+        <div class="w-full max-w-sm p-8 space-y-6 bg-white rounded-xl shadow-lg">
+            <div>
+                <h2 class="text-center text-3xl font-extrabold text-gray-900">
+                    Welcome Back
+                </h2>
+                <p class="mt-2 text-center text-sm text-gray-600">
+                    Please enter your password to continue
+                </p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="password" class="sr-only">Password</label>
+                    <input id="password" name="password" type="password" required class="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Password">
+                </div>
+                 <p id="login-error" class="text-xs text-red-600 text-center hidden"></p>
+            </div>
+            <button id="login-button" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Login
+            </button>
+        </div>
+    </div>
+    
+    <div id="app-container" class="container mx-auto max-w-lg py-6 px-4 hidden">
         
         <!-- Loader -->
         <div id="report-loader" class="flex justify-center items-center h-screen">
@@ -166,7 +198,7 @@
                 </div>
                 <!-- Checkbox List -->
                 <div id="stack-checkbox-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 text-sm max-h-40 overflow-y-auto p-2 border rounded-md bg-gray-50">
-                    <!-- Checkboxes populated by JS -->
+                    <!-- Checkboxes yahan JS se bhare jayenge -->
                 </div>
             </div>
 
@@ -188,7 +220,7 @@
                         <tbody id="report-transactions-table-body" class="divide-y divide-gray-200">
                         </tbody>
                     </table>
-                     <div id="report-no-data-message" class="text-center p-8 text-gray-500 hidden">No transactions found.</div>
+                     <div id="report-no-data-message" class="text-center p-8 text-gray-500 hidden">Koi transactions nahi mile.</div>
                 </div>
             </div>
         </main>
@@ -203,6 +235,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyAgzs3GqaafEHQSnEyZqrjQT0r_6jXMaGQ",
@@ -215,7 +248,15 @@
         };
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-        const transactionsRef = ref(database, 'transactions');
+        const auth = getAuth(app);
+        const userEmail = "jackprince79036@gmail.com"; // Aapki Gmail ID yahan hai
+
+        // Login Elements
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('login-button');
+        const loginError = document.getElementById('login-error');
 
         // General DOM Elements
         const mainContent = document.getElementById('main-content');
@@ -249,21 +290,69 @@
         }));
 
         let allTransactions = [];
-        let stackMasterData = {}; // To hold pre-calculated stack info
+        let stackMasterData = {};
 
-        onValue(transactionsRef, (snapshot) => {
-            const rawData = snapshot.val() || {};
-            allTransactions = Object.values(rawData);
-            
-            processMasterData(allTransactions);
-            
-            populateStackDropdown();
-            renderStackCheckboxes('All');
-            applyFilters();
-            
-            reportLoader.style.display = 'none';
-            mainContent.classList.remove('hidden');
+        // --- Authentication Logic ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User login hai
+                loginScreen.style.display = 'none';
+                appContainer.classList.remove('hidden');
+                initializeReportApp();
+            } else {
+                // User login nahi hai
+                loginScreen.style.display = 'flex';
+                appContainer.classList.add('hidden');
+                reportLoader.style.display = 'none';
+                mainContent.classList.add('hidden');
+            }
         });
+
+        const handleLogin = () => {
+            const password = passwordInput.value;
+            if (!password) {
+                loginError.textContent = 'Please enter your password.';
+                loginError.classList.remove('hidden');
+                return;
+            }
+            loginError.classList.add('hidden');
+            loginButton.textContent = 'Logging in...';
+            loginButton.disabled = true;
+
+            signInWithEmailAndPassword(auth, userEmail, password)
+                .catch((error) => {
+                    loginError.textContent = 'Incorrect password. Please try again.';
+                    loginError.classList.remove('hidden');
+                    loginButton.textContent = 'Login';
+                    loginButton.disabled = false;
+                });
+        };
+        
+        loginButton.addEventListener('click', handleLogin);
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+
+
+        // --- Report App Initialization ---
+        function initializeReportApp() {
+            const transactionsRef = ref(database, 'transactions');
+            onValue(transactionsRef, (snapshot) => {
+                const rawData = snapshot.val() || {};
+                allTransactions = Object.values(rawData);
+                
+                processMasterData(allTransactions);
+                
+                populateStackDropdown();
+                renderStackCheckboxes('All');
+                applyFilters();
+                
+                reportLoader.style.display = 'none';
+                mainContent.classList.remove('hidden');
+            }, { onlyOnce: true }); // Data ek baar load hoga
+        }
 
         function processMasterData(transactions) {
             const stackData = {};
@@ -310,7 +399,7 @@
             }
         }
 
-        // --- Main Filter Logic ---
+        // --- Filter Logic ---
         function applyFilters() {
             const filters = {
                 commodity: filterElements.commodity.value,
@@ -340,7 +429,7 @@
             filterElements.startDate.value = '';
             filterElements.endDate.value = '';
             applyFilters();
-            showToast('Filters reset.');
+            showToast('Filters reset ho gaye.');
         }
 
         function updateCompactCard(transactions) {
@@ -457,5 +546,4 @@
     </script>
 </body>
 </html>
-
 
