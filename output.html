@@ -204,18 +204,15 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
         
-        // IMPORTANT: These values are now read from Vercel Environment Variables
-        // Make sure you have set them up in your Vercel project settings with the "VITE_" prefix.
         const firebaseConfig = {
-            apiKey: import.meta.env.VITE_API_KEY,
-            authDomain: import.meta.env.VITE_AUTH_DOMAIN,
-            databaseURL: import.meta.env.VITE_DATABASE_URL,
-            projectId: import.meta.env.VITE_PROJECT_ID,
-            storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
-            messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
-            appId: import.meta.env.VITE_APP_ID
+            apiKey: "AIzaSyAgzs3GqaafEHQSnEyZqrjQT0r_6jXMaGQ",
+            authDomain: "re-store-7f2b3.firebaseapp.com",
+            databaseURL: "https://re-store-7f2b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "re-store-7f2b3",
+            storageBucket: "re-store-7f2b3.appspot.com",
+            messagingSenderId: "774895588253",
+            appId: "1:774895588253:web:dad6c0fed92bce7c39574"
         };
-
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const transactionsRef = ref(database, 'transactions');
