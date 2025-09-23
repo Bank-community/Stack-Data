@@ -46,16 +46,25 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
             <!-- Left Side: Data Entry Form -->
             <div class="w-full">
-                <div class="bg-white rounded-xl p-6 md:p-8 lg:p-12 custom-card h-full">
-                    <div class="mb-6 text-center">
-                        <label class="block text-base font-medium text-gray-700 mb-4">Select Commodity</label>
+                <div class="bg-white rounded-xl p-6 md:p-8 lg:p-10 custom-card h-full">
+                    <div class="mb-4 text-center">
+                        <label class="block text-base font-medium text-gray-700 mb-3">Select Commodity</label>
                         <div class="flex justify-center space-x-4">
                             <button type="button" data-commodity="Wheat" class="commodity-btn active">Wheat</button>
                             <button type="button" data-commodity="Maize" class="commodity-btn">Maize</button>
                         </div>
                     </div>
-                    <h2 class="text-2xl font-semibold mb-6 border-b pb-4 text-center text-gray-700">Enter New Transaction</h2>
-                    <form id="data-form" class="space-y-5"><!-- Form fields... --></form>
+                     <div class="mb-5 text-center px-4">
+                        <label class="block text-sm font-medium text-gray-600 mb-2">Transaction Type</label>
+                        <div class="flex items-center justify-center gap-2">
+                            <select id="transactionType" required class="w-full max-w-xs px-4 py-2 border bg-white border-gray-300 rounded-lg">
+                                <option value="inward">Inward</option>
+                                <option value="outward">Outward</option>
+                            </select>
+                            <button type="button" id="save-tx-type-btn" title="Save Transaction Type" class="p-2 bg-blue-100 text-blue-700 rounded-lg"><i data-lucide="save" class="w-5 h-5"></i></button>
+                        </div>
+                    </div>
+                    <form id="data-form" class="space-y-4"><!-- Form fields... --></form>
                 </div>
             </div>
             <!-- Right Side: Data Summary -->
@@ -149,7 +158,7 @@
 
         function setupForms() {
             document.querySelector('#data-form').innerHTML = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="stackNumber" class="block text-sm font-medium text-gray-600 mb-1">Stack Number</label>
                         <div class="flex items-center gap-2">
@@ -175,12 +184,11 @@
                         </div>
                     </div>
                 </div>
-                <div><label for="transactionType" class="block text-sm font-medium text-gray-600 mb-1">Transaction Type</label><select id="transactionType" required class="w-full px-4 py-2 border bg-white border-gray-300 rounded-lg"><option value="inward">Inward</option><option value="outward">Outward</option></select></div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label for="bags" class="block text-sm font-medium text-gray-600 mb-1">Bags</label><input type="number" id="bags" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
                     <div><label for="weight" class="block text-sm font-medium text-gray-600 mb-1">Weight (MT)</label><input type="number" step="0.001" id="weight" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
                 </div>
-                <div class="pt-4 space-y-3">
+                <div class="pt-2 space-y-3">
                     <button type="submit" class="w-full text-white font-bold py-3 px-4 rounded-lg submit-btn">Submit Data</button>
                     <button type="button" id="reset-saved-btn" class="w-full text-red-600 font-semibold py-2 px-4 rounded-lg bg-red-100 hover:bg-red-200 transition-colors text-sm flex items-center justify-center gap-2">
                         <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset Saved Data
@@ -226,17 +234,18 @@
         function loadSavedData() {
             const savedStack = localStorage.getItem('savedStackNumber');
             const savedDate = localStorage.getItem('savedDate');
+            const savedTxType = localStorage.getItem('savedTransactionType');
+            
             const dateInput = document.getElementById('date');
             const stackInput = document.getElementById('stackNumber');
+            const txTypeInput = document.getElementById('transactionType');
 
-            if (savedStack) {
-                stackInput.value = savedStack;
-            }
-            if (savedDate) {
-                dateInput.value = savedDate;
-            } else {
-                dateInput.valueAsDate = new Date();
-            }
+            if (savedStack) stackInput.value = savedStack;
+            
+            if (savedDate) dateInput.value = savedDate;
+            else dateInput.valueAsDate = new Date();
+
+            if (savedTxType) txTypeInput.value = savedTxType;
         }
 
         function setupEventListeners() {
@@ -274,11 +283,19 @@
                 }
             });
 
+            document.getElementById('save-tx-type-btn').addEventListener('click', () => {
+                const txTypeValue = document.getElementById('transactionType').value;
+                localStorage.setItem('savedTransactionType', txTypeValue);
+                showToast('Transaction type saved!');
+            });
+
             document.getElementById('reset-saved-btn').addEventListener('click', () => {
                 localStorage.removeItem('savedStackNumber');
                 localStorage.removeItem('savedDate');
+                localStorage.removeItem('savedTransactionType');
                 document.getElementById('stackNumber').value = '';
                 document.getElementById('date').valueAsDate = new Date();
+                document.getElementById('transactionType').value = 'inward';
                 showToast('Saved data has been reset.');
             });
 
