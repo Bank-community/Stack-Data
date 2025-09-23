@@ -154,7 +154,7 @@
                 <div>
                     <label for="countVan" class="block text-sm font-medium text-gray-600 mb-1">Count Van</label>
                     <div class="flex items-center gap-4">
-                        <input type="text" id="countVan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <input type="text" inputmode="numeric" id="countVan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                         <div class="flex items-center whitespace-nowrap">
                             <input type="checkbox" id="madeup-checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                             <label for="madeup-checkbox" class="ml-2 text-sm text-gray-600">Made-up</label>
@@ -175,7 +175,7 @@
                 <div>
                     <label for="edit-countVan" class="block text-sm font-medium text-gray-600 mb-1">Count Van</label>
                      <div class="flex items-center gap-4">
-                        <input type="text" id="edit-countVan" required class="w-full p-2 border rounded-md">
+                        <input type="text" inputmode="numeric" id="edit-countVan" required class="w-full p-2 border rounded-md">
                         <div class="flex items-center whitespace-nowrap">
                             <input type="checkbox" id="edit-madeup-checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                             <label for="edit-madeup-checkbox" class="ml-2 text-sm text-gray-600">Made-up</label>
@@ -266,14 +266,14 @@
             if (bags <= 0) {
                 showToast("Bags must be greater than 0.", false); return;
             }
-            if (!stackNumber || !date || !countVan) {
+            if (!stackNumber || !date || !countVan.trim()) {
                 showToast('Please fill all fields correctly.', false); return;
             }
 
             const transaction = {
                 stackNumber: stackNumber,
                 date: date,
-                countVan: countVan,
+                countVan: countVan.trim(),
                 commodity: selectedCommodity,
                 transactionType: document.getElementById('transactionType').value,
                 bags: bags,
@@ -400,7 +400,7 @@
             const updatedTx = { ...allTransactions[id],
                 date: document.getElementById('edit-date').value,
                 stackNumber: document.getElementById('edit-stackNumber').value,
-                countVan: document.getElementById('edit-countVan').value,
+                countVan: document.getElementById('edit-countVan').value.trim(),
                 bags: Number(document.getElementById('edit-bags').value),
                 weight: Number(document.getElementById('edit-weight').value),
             };
@@ -437,4 +437,5 @@
     </script>
 </body>
 </html>
+
 
