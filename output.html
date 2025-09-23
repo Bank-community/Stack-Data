@@ -44,6 +44,23 @@
             padding-top: 0.6rem;
             padding-bottom: 0.6rem;
         }
+        /* Styles for the calculator */
+        .calculator-btn {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            color: #4b5563;
+            background-color: #ffffff;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-size: 0.8rem;
+        }
+        .calculator-btn.active {
+            border-color: #3b82f6;
+            background-color: #3b82f6;
+            color: #ffffff;
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -94,7 +111,7 @@
             </div>
 
             <!-- Compact Filter Section -->
-            <div class="mb-8 p-4 bg-gray-100 rounded-lg">
+            <div class="mb-6 p-4 bg-gray-100 rounded-lg">
                  <div class="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
                     <div>
                         <label for="filter-commodity" class="block text-xs font-medium text-gray-600 mb-1">Commodity</label>
@@ -106,7 +123,6 @@
                     </div>
                     <div>
                         <label for="filter-stackNumber" class="block text-xs font-medium text-gray-600 mb-1">Stack No.</label>
-                        <!-- UPDATED: This is now a select dropdown -->
                         <select id="filter-stackNumber" class="filter-input w-full px-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white text-sm">
                             <option value="">All Stacks</option>
                         </select>
@@ -122,6 +138,35 @@
                     <div class="col-span-2 md:col-span-1">
                          <button id="reset-filter-btn" class="reset-btn w-full text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 text-sm">Reset</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Stack Calculator Section -->
+            <div class="mb-8 bg-white rounded-xl p-4 custom-card">
+                <h3 class="text-lg font-bold text-gray-800 mb-3 text-center">Stack Calculator</h3>
+                <!-- Display Area -->
+                <div class="bg-indigo-50 p-3 rounded-lg text-center mb-4">
+                    <span id="calculator-display-title" class="font-bold text-gray-800">Selected Net Stock:</span>
+                    <div class="font-extrabold text-lg">
+                        <span id="calculator-display-bags" class="text-indigo-700">0</span> Bags /
+                        <span id="calculator-display-weight" class="text-indigo-700">0.000</span> MT
+                    </div>
+                </div>
+                <!-- Commodity Filters & Gross Inward Checkbox -->
+                <div class="flex justify-center items-center gap-4 mb-3 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <button class="calculator-btn active" data-commodity-filter="All">All</button>
+                        <button class="calculator-btn" data-commodity-filter="Wheat">Wheat</button>
+                        <button class="calculator-btn" data-commodity-filter="Maize">Maize</button>
+                    </div>
+                    <div class="flex items-center border-l pl-3">
+                        <input type="checkbox" id="calculator-gross-checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <label for="calculator-gross-checkbox" class="ml-2 text-sm font-medium text-gray-700">Gross Inward</label>
+                    </div>
+                </div>
+                <!-- Checkbox List -->
+                <div id="stack-checkbox-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 text-sm max-h-40 overflow-y-auto p-2 border rounded-md bg-gray-50">
+                    <!-- Checkboxes populated by JS -->
                 </div>
             </div>
 
@@ -172,6 +217,7 @@
         const database = getDatabase(app);
         const transactionsRef = ref(database, 'transactions');
 
+        // General DOM Elements
         const mainContent = document.getElementById('main-content');
         const reportLoader = document.getElementById('report-loader');
         const cardTitle = document.getElementById('card-title');
@@ -179,6 +225,7 @@
         const tableBody = document.getElementById('report-transactions-table-body');
         const noDataMessage = document.getElementById('report-no-data-message');
         
+        // Filter Elements
         const filterElements = {
             commodity: document.getElementById('filter-commodity'),
             stackNumber: document.getElementById('filter-stackNumber'),
@@ -186,41 +233,84 @@
             endDate: document.getElementById('filter-endDate')
         };
         document.getElementById('reset-filter-btn').addEventListener('click', resetFilters);
-        Object.values(filterElements).forEach(el => el.addEventListener('change', applyFilters)); // Use 'change' for select dropdowns
+        Object.values(filterElements).forEach(el => el.addEventListener('change', applyFilters));
 
-        let allTransactions = {};
+        // Calculator Elements
+        const checkboxContainer = document.getElementById('stack-checkbox-container');
+        const calculatorDisplayTitle = document.getElementById('calculator-display-title');
+        const calculatorDisplayBags = document.getElementById('calculator-display-bags');
+        const calculatorDisplayWeight = document.getElementById('calculator-display-weight');
+        const calculatorGrossCheckbox = document.getElementById('calculator-gross-checkbox');
+        calculatorGrossCheckbox.addEventListener('change', updateCalculatorDisplay);
+        document.querySelectorAll('.calculator-btn').forEach(btn => btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.calculator-btn').forEach(b => b.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            renderStackCheckboxes(e.currentTarget.dataset.commodityFilter);
+        }));
+
+        let allTransactions = [];
+        let stackMasterData = {}; // To hold pre-calculated stack info
 
         onValue(transactionsRef, (snapshot) => {
-            allTransactions = snapshot.val() || {};
-            populateStackDropdown(allTransactions); // NEW: Populate dropdown
+            const rawData = snapshot.val() || {};
+            allTransactions = Object.values(rawData);
+            
+            processMasterData(allTransactions);
+            
+            populateStackDropdown();
+            renderStackCheckboxes('All');
             applyFilters();
+            
             reportLoader.style.display = 'none';
             mainContent.classList.remove('hidden');
         });
-        
-        // NEW FUNCTION: To populate the stack number dropdown
-        function populateStackDropdown(transactions) {
+
+        function processMasterData(transactions) {
+            const stackData = {};
+            transactions.forEach(tx => {
+                const stackNum = tx.stackNumber;
+                if (!stackData[stackNum]) {
+                    stackData[stackNum] = {
+                        netBags: 0, netWeight: 0,
+                        inwardBags: 0, inwardWeight: 0,
+                        commodities: new Set()
+                    };
+                }
+                const bags = tx.bags || 0;
+                const weight = tx.weight || 0;
+
+                if (tx.transactionType === 'inward') {
+                    stackData[stackNum].netBags += bags;
+                    stackData[stackNum].netWeight += weight;
+                    stackData[stackNum].inwardBags += bags;
+                    stackData[stackNum].inwardWeight += weight;
+                } else {
+                    stackData[stackNum].netBags -= bags;
+                    stackData[stackNum].netWeight -= weight;
+                }
+                stackData[stackNum].commodities.add(tx.commodity);
+            });
+            stackMasterData = stackData;
+        }
+
+        function populateStackDropdown() {
             const stackSelect = filterElements.stackNumber;
             const existingValue = stackSelect.value;
+            const stackNumbers = Object.keys(stackMasterData).sort((a, b) => a - b);
             
-            const stackNumbers = [...new Set(Object.values(transactions).map(tx => tx.stackNumber))];
-            stackNumbers.sort();
-            
-            stackSelect.innerHTML = '<option value="">All Stacks</option>'; // Default option
-            
+            stackSelect.innerHTML = '<option value="">All Stacks</option>';
             stackNumbers.forEach(stack => {
                 const option = document.createElement('option');
                 option.value = stack;
                 option.textContent = stack;
                 stackSelect.appendChild(option);
             });
-            
-            // Keep the selected value if it still exists after update
             if (stackNumbers.includes(existingValue)) {
                 stackSelect.value = existingValue;
             }
         }
 
+        // --- Main Filter Logic ---
         function applyFilters() {
             const filters = {
                 commodity: filterElements.commodity.value,
@@ -233,7 +323,7 @@
             const titleStackPart = stackNumberDisplay ? `- Stack <span class="text-blue-600 font-bold">${stackNumberDisplay}</span>` : '';
             cardTitle.innerHTML = `${filters.commodity === 'All' ? 'All Commodities' : filters.commodity} Summary ${titleStackPart}`;
 
-            const filtered = Object.values(allTransactions).filter(tx => 
+            const filtered = allTransactions.filter(tx => 
                 (filters.commodity === 'All' || tx.commodity === filters.commodity) &&
                 (!filters.stackNumber || tx.stackNumber === filters.stackNumber) &&
                 (!filters.startDate || tx.date >= filters.startDate) &&
@@ -246,7 +336,7 @@
 
         function resetFilters() {
             filterElements.commodity.value = 'Wheat';
-            filterElements.stackNumber.value = ''; // Reset to "All Stacks"
+            filterElements.stackNumber.value = '';
             filterElements.startDate.value = '';
             filterElements.endDate.value = '';
             applyFilters();
@@ -256,12 +346,14 @@
         function updateCompactCard(transactions) {
             let stats = { inwardBags: 0, inwardWeight: 0, outwardBags: 0, outwardWeight: 0 };
             transactions.forEach(tx => {
+                const bags = tx.bags || 0;
+                const weight = tx.weight || 0;
                 if (tx.transactionType === 'inward') {
-                    stats.inwardBags += tx.bags;
-                    stats.inwardWeight += tx.weight;
+                    stats.inwardBags += bags;
+                    stats.inwardWeight += weight;
                 } else {
-                    stats.outwardBags += tx.bags;
-                    stats.outwardWeight += tx.weight;
+                    stats.outwardBags += bags;
+                    stats.outwardWeight += weight;
                 }
             });
             
@@ -291,7 +383,6 @@
         function populateReportTable(transactions) {
             tableBody.innerHTML = '';
             noDataMessage.classList.toggle('hidden', transactions.length > 0);
-
             if (transactions.length > 0) {
                 transactions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
                     tableBody.insertRow().innerHTML = `
@@ -302,11 +393,59 @@
                             '<span class="font-semibold text-green-700">Inward</span>' : 
                             '<span class="font-semibold text-red-700">Outward</span>'}
                         </td>
-                        <td class="p-3">${tx.bags.toLocaleString()}</td>
-                        <td class="p-3">${tx.weight.toFixed(3)} MT</td>
+                        <td class="p-3">${(tx.bags || 0).toLocaleString()}</td>
+                        <td class="p-3">${(tx.weight || 0).toFixed(3)} MT</td>
                     `;
                 });
             }
+        }
+
+        // --- Stack Calculator Logic ---
+        function renderStackCheckboxes(commodityFilter) {
+            checkboxContainer.innerHTML = '';
+            const stackNumbers = Object.keys(stackMasterData).sort((a, b) => a - b);
+            
+            stackNumbers.forEach(stackNum => {
+                const stackInfo = stackMasterData[stackNum];
+                if (commodityFilter === 'All' || stackInfo.commodities.has(commodityFilter)) {
+                    const label = document.createElement('label');
+                    label.className = "flex items-center gap-1.5 p-1 rounded hover:bg-gray-200 cursor-pointer";
+                    label.innerHTML = `
+                        <input type="checkbox" data-stack="${stackNum}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 stack-calculator-checkbox">
+                        <span class="font-medium text-gray-700">${stackNum}</span>
+                    `;
+                    checkboxContainer.appendChild(label);
+                }
+            });
+
+            document.querySelectorAll('.stack-calculator-checkbox').forEach(cb => {
+                cb.addEventListener('change', updateCalculatorDisplay);
+            });
+            updateCalculatorDisplay();
+        }
+
+        function updateCalculatorDisplay() {
+            const isGrossMode = calculatorGrossCheckbox.checked;
+            let totalBags = 0;
+            let totalWeight = 0;
+            const checkedBoxes = document.querySelectorAll('.stack-calculator-checkbox:checked');
+            
+            checkedBoxes.forEach(cb => {
+                const stackNum = cb.dataset.stack;
+                if (stackMasterData[stackNum]) {
+                    if (isGrossMode) {
+                        totalBags += stackMasterData[stackNum].inwardBags;
+                        totalWeight += stackMasterData[stackNum].inwardWeight;
+                    } else {
+                        totalBags += stackMasterData[stackNum].netBags;
+                        totalWeight += stackMasterData[stackNum].netWeight;
+                    }
+                }
+            });
+
+            calculatorDisplayTitle.textContent = isGrossMode ? 'Selected Gross Inward:' : 'Selected Net Stock:';
+            calculatorDisplayBags.textContent = totalBags.toLocaleString();
+            calculatorDisplayWeight.textContent = totalWeight.toFixed(3);
         }
 
         function showToast(message) {
