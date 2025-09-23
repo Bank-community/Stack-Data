@@ -441,23 +441,49 @@
             const selectedStack = modalStackFilter.value;
             const selectedType = modalTypeFilter.value;
 
-            let filtered = currentModalTransactionPool;
-
+            let transactionsToShow = currentModalTransactionPool;
             if (selectedStack) {
-                filtered = filtered.filter(tx => tx.stackNumber === selectedStack);
-            }
-            if (selectedType !== 'all') {
-                filtered = filtered.filter(tx => tx.transactionType === selectedType);
+                transactionsToShow = transactionsToShow.filter(tx => tx.stackNumber === selectedStack);
             }
 
-            populateTable(filtered);
-            updateModalSummary(filtered);
+            let summaryTransactions = transactionsToShow;
+            if (selectedType !== 'all') {
+                transactionsToShow = transactionsToShow.filter(tx => tx.transactionType === selectedType);
+                summaryTransactions = transactionsToShow;
+            }
+
+            populateTable(transactionsToShow);
+            updateModalSummary(summaryTransactions);
         }
         
         function updateModalSummary(transactions) {
-            const totalBags = transactions.reduce((sum, tx) => sum + (Number(tx.bags) || 0), 0);
-            const totalWeight = transactions.reduce((sum, tx) => sum + (Number(tx.weight) || 0), 0);
-            modalSummaryDisplay.innerHTML = `Total: <span class="font-bold text-blue-600">${totalBags.toLocaleString()}</span> Bags / <span class="font-bold text-blue-600">${totalWeight.toFixed(3)}</span> MT`;
+            const selectedType = modalTypeFilter.value;
+            let totalBags = 0;
+            let totalWeight = 0;
+            let summaryLabel = "Total:";
+
+            if (selectedType === 'all') {
+                let inwardBags = 0, inwardWeight = 0, outwardBags = 0, outwardWeight = 0;
+                transactions.forEach(tx => {
+                    const bags = Number(tx.bags) || 0;
+                    const weight = Number(tx.weight) || 0;
+                    if (tx.transactionType === 'inward') {
+                        inwardBags += bags;
+                        inwardWeight += weight;
+                    } else {
+                        outwardBags += bags;
+                        outwardWeight += weight;
+                    }
+                });
+                totalBags = inwardBags - outwardBags;
+                totalWeight = inwardWeight - outwardWeight;
+                summaryLabel = "Available:";
+            } else {
+                totalBags = transactions.reduce((sum, tx) => sum + (Number(tx.bags) || 0), 0);
+                totalWeight = transactions.reduce((sum, tx) => sum + (Number(tx.weight) || 0), 0);
+                summaryLabel = selectedType === 'inward' ? "Total Inward:" : "Total Outward:";
+            }
+            modalSummaryDisplay.innerHTML = `${summaryLabel} <span class="font-bold text-blue-600">${totalBags.toLocaleString()}</span> Bags / <span class="font-bold text-blue-600">${totalWeight.toFixed(3)}</span> MT`;
         }
 
         function populateTable(transactions) {
