@@ -4,13 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RUDRANSH STOCK Dashboard</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-        .custom-card { box-shadow: 0 8px 12px rgba(0, 0, 0, 0.05); transition: all 0.9s ease-in-out; border: 1px solid #e5e7eb; }
+        .custom-card { box-shadow: 0 8px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; }
         .clickable-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08); cursor: pointer; }
         .submit-btn { background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: all 0.3s ease; }
         .submit-btn:hover { box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
@@ -18,11 +20,19 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .commodity-btn { padding: 10px 24px; border: 1px solid #d1d5db; color: #4b5563; background-color: #ffffff; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; }
         .commodity-btn.active { border-color: #3b82f6; background-color: #3b82f6; color: #ffffff; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); }
-        .commodity-btn:hover:not(.active) { border-color: #3b82f6; color: #3b82f6; }
         .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 40; display: flex; align-items: center; justify-content: center; }
         .modal-content { background-color: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); max-height: 90vh; display: flex; flex-direction: column; }
         .action-btn { transition: all 0.2s ease; }
         .action-btn:hover { transform: scale(1.1); }
+        /* Style for number input to hide arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -31,124 +41,53 @@
             <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">RUDRANSH STOCK</h1>
         </header>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+            <!-- Left Side: Data Entry Form -->
             <div class="w-full">
-                <div class="bg-white rounded-xl p-2 md:p-24 custom-card h-full">
+                <div class="bg-white rounded-xl p-6 md:p-8 lg:p-12 custom-card h-full">
                     <div class="mb-6 text-center">
-                        <label class="block text-base font-medium text-gray-700 mb-4">Select Commodity for Data Entry</label>
+                        <label class="block text-base font-medium text-gray-700 mb-4">Select Commodity</label>
                         <div class="flex justify-center space-x-4">
-                            <button type="button" id="wheat-btn" class="commodity-btn active">Wheat</button>
-                            <button type="button" id="maize-btn" class="commodity-btn">Maize</button>
+                            <button type="button" data-commodity="Wheat" class="commodity-btn active">Wheat</button>
+                            <button type="button" data-commodity="Maize" class="commodity-btn">Maize</button>
                         </div>
                     </div>
                     <h2 class="text-2xl font-semibold mb-6 border-b pb-4 text-center text-gray-700">Enter New Transaction</h2>
-                    <form id="data-form" class="space-y-5">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                             <div>
-                                <label for="stackNumber" class="block text-sm font-medium text-gray-600 mb-1">Stack Number</label>
-                                <input type="number" id="stackNumber" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-                            </div>
-                            <div>
-                                <label for="date" class="block text-sm font-medium text-gray-600 mb-1">Date</label>
-                                <input type="date" id="date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-                            </div>
-                        </div>
-                         
-                        <div>
-                            <label for="countVanInput" class="block text-sm font-medium text-gray-600 mb-1">Count Van</label>
-                            <div class="flex items-center space-x-4">
-                                <input type="number" id="countVanInput" placeholder="e.g., 1234" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition disabled:bg-gray-100">
-                                <div class="flex items-center">
-                                    <input type="checkbox" id="madeUpCheckbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                    <label for="madeUpCheckbox" class="ml-2 block text-sm text-gray-900">Made-up</label>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <label for="transactionType" class="block text-sm font-medium text-gray-600 mb-1">Transaction Type</label>
-                            <select id="transactionType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white">
-                                <option value="inward">Inward</option>
-                                <option value="outward">Outward</option>
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            <div>
-                                <label for="bags" class="block text-sm font-medium text-gray-600 mb-1">Bags</label>
-                                <input type="number" id="bags" placeholder="e.g., 100" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-                            </div>
-                            <div>
-                                <label for="weight" class="block text-sm font-medium text-gray-600 mb-1">Weight (MT)</label>
-                                <input type="number" step="any" id="weight" placeholder="e.g., 5.753" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-                            </div>
-                        </div>
-                        <div class="pt-4">
-                            <button type="submit" class="w-full text-white font-bold py-3 px-4 rounded-lg submit-btn focus:outline-none focus:ring-4 focus:ring-blue-300">Submit Data</button>
-                        </div>
-                    </form>
+                    <form id="data-form" class="space-y-5"><!-- Form fields... --></form>
                 </div>
             </div>
-
+            <!-- Right Side: Data Summary -->
             <div class="w-full">
-                <div id="loader" class="flex justify-center items-center h-full">
-                    <div class="loader"></div>
-                </div>
-                <div id="summary-section" class="hidden space-y-5">
-                    <h3 id="summary-title" class="text-2xl font-bold text-gray-800 text-center mb-2"></h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div id="inward-card" class="bg-white rounded-xl p-5 custom-card clickable-card">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="font-semibold text-gray-500">Total Inward</h3>
-                                <div class="bg-green-100 p-2 rounded-full">
-                                    <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                                </div>
-                            </div>
-                            <p id="totalInwardBags" class="text-3xl font-bold text-gray-800">0 <span class="text-base font-medium text-gray-500">Bags</span></p>
-                            <p id="totalInwardWeight" class="text-3xl font-bold text-gray-800 mt-1">0.00 <span class="text-base font-medium text-gray-500">MT</span></p>
-                        </div>
-                        <div id="outward-card" class="bg-white rounded-xl p-5 custom-card clickable-card">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="font-semibold text-gray-500">Total Outward</h3>
-                                <div class="bg-red-100 p-2 rounded-full">
-                                    <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-                                </div>
-                            </div>
-                            <p id="totalOutwardBags" class="text-3xl font-bold text-gray-800">0 <span class="text-base font-medium text-gray-500">Bags</span></p>
-                            <p id="totalOutwardWeight" class="text-3xl font-bold text-gray-800 mt-1">0.00 <span class="text-base font-medium text-gray-500">MT</span></p>
-                        </div>
-                    </div>
-                    <div id="net-card" class="bg-white rounded-xl p-5 custom-card clickable-card">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="font-semibold text-gray-500">Net Stock (Balance)</h3>
-                            <div class="bg-blue-100 p-2 rounded-full">
-                                <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h12A2.25 2.25 0 0020.25 14.25V3.75M3.75 3h16.5M3.75 3v-1.5A2.25 2.25 0 016 0h12A2.25 2.25 0 0120.25 1.5V3M3.75 3v1.5A2.25 2.25 0 016 6h12a2.25 2.25 0 012.25-1.5V3" /></svg>
-                            </div>
-                        </div>
-                        <p id="netBags" class="text-3xl font-bold text-blue-600">0 <span class="text-base font-medium text-gray-500">Bags</span></p>
-                        <p id="netWeight" class="text-3xl font-bold text-blue-600 mt-1">0.00 <span class="text-base font-medium text-gray-500">MT</span></p>
-                    </div>
-                    <div class="bg-gray-800 text-white rounded-xl p-5 custom-card">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="font-semibold text-gray-400">Grand Total (All Stock)</h3>
-                            <div class="bg-gray-700 p-2 rounded-full">
-                                <svg class="h-6 w-6 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" /></svg>
-                            </div>
-                        </div>
-                        <p id="grandTotalBags" class="text-3xl font-bold">0 <span class="text-base font-medium text-gray-400">Bags</span></p>
-                        <p id="grandTotalWeight" class="text-3xl font-bold mt-1">0.00 <span class="text-base font-medium text-gray-400">MT</span></p>
-                    </div>
-                </div>
+                <div id="loader" class="flex justify-center items-center h-full"><div class="loader"></div></div>
+                <div id="summary-section" class="hidden space-y-5"><!-- Summary Cards... --></div>
             </div>
         </div>
     </div>
 
+    <!-- Modals -->
     <div id="table-modal" class="modal-backdrop hidden">
         <div class="modal-content w-11/12 max-w-4xl">
-            <div class="p-4 border-b flex justify-between items-center"><h2 id="table-modal-title" class="text-xl font-semibold">Transactions</h2><button id="close-table-modal" class="text-gray-500 hover:text-gray-800">&times;</button></div>
+            <div class="p-4 border-b flex justify-between items-center">
+                <h2 id="table-modal-title" class="text-xl font-semibold">Transactions</h2>
+                <button id="close-table-modal" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+            </div>
+            <div class="p-3 bg-gray-50 border-b flex justify-between items-center gap-4 flex-wrap">
+                <div class="flex items-center">
+                    <label for="modal-stack-filter" class="text-sm font-medium text-gray-600 mr-2">Filter by Stack:</label>
+                    <select id="modal-stack-filter" class="p-1 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"></select>
+                </div>
+                <div id="modal-summary-display" class="text-sm font-semibold text-gray-700 text-right"></div>
+            </div>
             <div class="p-4 overflow-y-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50"><tr><th class="p-3">Date</th><th class="p-3">Stack No.</th><th class="p-3">Van</th><th class="p-3">Bags</th><th class="p-3">Weight (MT)</th><th class="p-3">Actions</th></tr></thead>
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="p-3">Date</th><th class="p-3">Stack No.</th><th class="p-3">Van</th>
+                            <th class="p-3">Bags</th><th class="p-3">Weight (MT)</th><th class="p-3">Actions</th>
+                        </tr>
+                    </thead>
                     <tbody id="transactions-table-body"></tbody>
                 </table>
-                 <div id="no-data-message" class="text-center p-8 text-gray-500 hidden">No transactions found.</div>
+                <div id="no-data-message" class="text-center p-8 text-gray-500 hidden">No transactions found.</div>
             </div>
         </div>
     </div>
@@ -157,47 +96,23 @@
         <div class="modal-content w-11/12 max-w-lg p-6">
             <h2 class="text-xl font-semibold mb-4">Edit Transaction</h2>
             <form id="edit-form" class="space-y-4">
-                <input type="hidden" id="edit-transaction-id">
-                 <div>
-                    <label for="edit-date">Date</label>
-                    <input type="date" id="edit-date" required class="w-full mt-1 p-2 border rounded-md">
-                </div>
-                <div>
-                    <label for="edit-stackNumber">Stack Number</label>
-                    <input type="number" id="edit-stackNumber" required class="w-full mt-1 p-2 border rounded-md">
-                </div>
-
-                <div>
-                    <label for="edit-countVanInput" class="block text-sm font-medium text-gray-700 mb-1">Count Van</label>
-                    <div class="flex items-center space-x-4">
-                         <input type="number" id="edit-countVanInput" class="w-full mt-1 p-2 border rounded-md disabled:bg-gray-100">
-                         <div class="flex items-center">
-                            <input type="checkbox" id="edit-madeUpCheckbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                            <label for="edit-madeUpCheckbox" class="ml-2 block text-sm text-gray-900">Made-up</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="edit-bags">Bags</label>
-                        <input type="number" id="edit-bags" required class="w-full mt-1 p-2 border rounded-md">
-                    </div>
-                    <div>
-                        <label for="edit-weight">Weight (MT)</label>
-                        <input type="number" step="any" id="edit-weight" required class="w-full mt-1 p-2 border rounded-md">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" id="cancel-edit" class="px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md">Save Changes</button>
-                </div>
+                <!-- Edit form fields will be here -->
             </form>
         </div>
     </div>
-
-    <div id="delete-modal" class="modal-backdrop hidden"><div class="modal-content w-11/12 max-w-sm p-6 text-center"><h2 class="text-lg font-semibold mb-2">Are you sure?</h2><p class="text-gray-600 mb-6">This transaction will be permanently deleted.</p><div class="flex justify-center space-x-4"><button id="cancel-delete" class="px-6 py-2 bg-gray-200 rounded-md">Cancel</button><button id="confirm-delete" class="px-6 py-2 bg-red-500 text-white rounded-md">Delete</button></div></div></div>
+    <div id="delete-modal" class="modal-backdrop hidden">
+        <div class="modal-content w-11/12 max-w-sm p-6 text-center">
+            <h2 class="text-lg font-semibold mb-2">Are you sure?</h2>
+            <p class="text-gray-600 mb-6">This will be permanently deleted.</p>
+            <div class="flex justify-center space-x-4">
+                 <button id="cancel-delete" class="px-6 py-2 bg-gray-200 rounded-md">Cancel</button>
+                 <button id="confirm-delete" class="px-6 py-2 bg-red-500 text-white rounded-md">Delete</button>
+            </div>
+        </div>
+    </div>
     <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-3 px-6 rounded-lg shadow-lg opacity-0 transform translate-y-2 transition-all duration-300"><span id="toast-message"></span></div>
 
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
@@ -209,62 +124,133 @@
             projectId: "re-store-7f2b3",
             storageBucket: "re-store-7f2b3.appspot.com",
             messagingSenderId: "774895588253",
-            appId: "1:774895588253:web:dad6c0fed92bce7c39574",
-            measurementId: "G-0FCZPC3TXL"
+            appId: "1:774895588253:web:dad6c0fed92bce7c39574"
         };
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const transactionsRef = ref(database, 'transactions');
 
-        let selectedCommodityForSummary = 'Wheat';
-        let allTransactions = null;
+        let selectedCommodity = 'Wheat';
+        let allTransactions = {};
+        let currentModalTransactions = [];
         let transactionIdToDelete = null;
 
+        // DOM Elements
         const loader = document.getElementById('loader');
         const summarySection = document.getElementById('summary-section');
-        const dateInput = document.getElementById('date');
-        const wheatBtn = document.getElementById('wheat-btn');
-        const maizeBtn = document.getElementById('maize-btn');
-        
-        // ##### NEW: Get Count Van elements #####
-        const countVanInput = document.getElementById('countVanInput');
-        const madeUpCheckbox = document.getElementById('madeUpCheckbox');
-
+        const modalStackFilter = document.getElementById('modal-stack-filter');
+        const modalSummaryDisplay = document.getElementById('modal-summary-display');
         const tableModal = document.getElementById('table-modal');
         const editModal = document.getElementById('edit-modal');
         const deleteModal = document.getElementById('delete-modal');
 
-        dateInput.valueAsDate = new Date();
-        document.getElementById('data-form').addEventListener('submit', handleDataFormSubmit);
-        
-        // ##### NEW: Event listener for the main form's checkbox #####
-        madeUpCheckbox.addEventListener('change', () => {
-            countVanInput.disabled = madeUpCheckbox.checked;
-            if (madeUpCheckbox.checked) {
-                countVanInput.value = '';
-            }
-        });
+        // Initial setup for form and summary HTML (to keep JS clean)
+        function setupForms() {
+            document.querySelector('#data-form').innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div><label for="stackNumber" class="block text-sm font-medium text-gray-600 mb-1">Stack Number</label><input type="number" id="stackNumber" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
+                    <div><label for="date" class="block text-sm font-medium text-gray-600 mb-1">Date</label><input type="date" id="date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
+                </div>
+                <div>
+                    <label for="countVan" class="block text-sm font-medium text-gray-600 mb-1">Count Van</label>
+                    <div class="flex items-center gap-4">
+                        <input type="text" id="countVan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <div class="flex items-center whitespace-nowrap">
+                            <input type="checkbox" id="madeup-checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <label for="madeup-checkbox" class="ml-2 text-sm text-gray-600">Made-up</label>
+                        </div>
+                    </div>
+                </div>
+                <div><label for="transactionType" class="block text-sm font-medium text-gray-600 mb-1">Transaction Type</label><select id="transactionType" required class="w-full px-4 py-2 border bg-white border-gray-300 rounded-lg"><option value="inward">Inward</option><option value="outward">Outward</option></select></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div><label for="bags" class="block text-sm font-medium text-gray-600 mb-1">Bags</label><input type="number" id="bags" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
+                    <div><label for="weight" class="block text-sm font-medium text-gray-600 mb-1">Weight (MT)</label><input type="number" step="0.001" id="weight" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
+                </div>
+                <div class="pt-4"><button type="submit" class="w-full text-white font-bold py-3 px-4 rounded-lg submit-btn">Submit Data</button></div>`;
 
-        wheatBtn.addEventListener('click', () => { selectedCommodityForSummary = 'Wheat'; updateCommodityButtons(); updateSummary(); });
-        maizeBtn.addEventListener('click', () => { selectedCommodityForSummary = 'Maize'; updateCommodityButtons(); updateSummary(); });
-        function updateCommodityButtons() {
-            if (selectedCommodityForSummary === 'Wheat') { wheatBtn.classList.add('active'); maizeBtn.classList.remove('active'); } 
-            else { maizeBtn.classList.add('active'); wheatBtn.classList.remove('active'); }
+            document.querySelector('#edit-form').innerHTML = `
+                <input type="hidden" id="edit-transaction-id">
+                <div><label for="edit-date" class="block text-sm font-medium text-gray-600 mb-1">Date</label><input type="date" id="edit-date" required class="w-full mt-1 p-2 border rounded-md"></div>
+                <div><label for="edit-stackNumber" class="block text-sm font-medium text-gray-600 mb-1">Stack Number</label><input type="number" id="edit-stackNumber" required class="w-full mt-1 p-2 border rounded-md"></div>
+                <div>
+                    <label for="edit-countVan" class="block text-sm font-medium text-gray-600 mb-1">Count Van</label>
+                     <div class="flex items-center gap-4">
+                        <input type="text" id="edit-countVan" required class="w-full p-2 border rounded-md">
+                        <div class="flex items-center whitespace-nowrap">
+                            <input type="checkbox" id="edit-madeup-checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <label for="edit-madeup-checkbox" class="ml-2 text-sm text-gray-600">Made-up</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label for="edit-bags" class="block text-sm font-medium text-gray-600 mb-1">Bags</label><input type="number" id="edit-bags" required class="w-full mt-1 p-2 border rounded-md"></div>
+                    <div><label for="edit-weight" class="block text-sm font-medium text-gray-600 mb-1">Weight (MT)</label><input type="number" step="0.001" id="edit-weight" required class="w-full mt-1 p-2 border rounded-md"></div>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" id="cancel-edit" class="px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md">Save Changes</button>
+                </div>`;
+        
+            document.querySelector('#summary-section').innerHTML = `
+                <h3 id="summary-title" class="text-2xl font-bold text-gray-800 text-center mb-2"></h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div id="inward-card" class="bg-white rounded-xl p-5 custom-card clickable-card"><h3 class="font-semibold text-gray-500">Total Inward</h3><p id="totalInwardBags" class="text-3xl font-bold text-gray-800 mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="totalInwardWeight" class="text-2xl font-bold mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>
+                    <div id="outward-card" class="bg-white rounded-xl p-5 custom-card clickable-card"><h3 class="font-semibold text-gray-500">Total Outward</h3><p id="totalOutwardBags" class="text-3xl font-bold text-gray-800 mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="totalOutwardWeight" class="text-2xl font-bold mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>
+                </div>
+                <div id="net-card" class="bg-white rounded-xl p-5 custom-card clickable-card"><h3 class="font-semibold text-gray-500">Net Stock</h3><p id="netBags" class="text-3xl font-bold text-blue-600 mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="netWeight" class="text-2xl font-bold text-blue-600 mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>
+                <div class="bg-gray-800 text-white rounded-xl p-5 custom-card"><h3 class="font-semibold text-gray-400">Grand Total</h3><p id="grandTotalBags" class="text-3xl font-bold mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="grandTotalWeight" class="text-2xl font-bold mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>`;
         }
-        
-        document.getElementById('inward-card').addEventListener('click', () => showTableModal('inward'));
-        document.getElementById('outward-card').addEventListener('click', () => showTableModal('outward'));
-        document.getElementById('net-card').addEventListener('click', () => showTableModal('net'));
+        setupForms();
 
-        document.getElementById('close-table-modal').addEventListener('click', () => tableModal.classList.add('hidden'));
-        document.getElementById('cancel-edit').addEventListener('click', () => editModal.classList.add('hidden'));
-        document.getElementById('cancel-delete').addEventListener('click', () => deleteModal.classList.add('hidden'));
+        // Re-assign elements and add listeners after innerHTML overwrite
+        function setupEventListeners() {
+            document.getElementById('date').valueAsDate = new Date();
+            document.getElementById('data-form').addEventListener('submit', handleDataFormSubmit);
+            document.getElementById('edit-form').addEventListener('submit', handleEditFormSubmit);
 
-        document.getElementById('edit-form').addEventListener('submit', handleEditFormSubmit);
-        document.getElementById('confirm-delete').addEventListener('click', handleDeleteConfirmation);
+            document.querySelectorAll('.commodity-btn').forEach(btn => btn.addEventListener('click', (e) => switchCommodity(e.target.dataset.commodity)));
+            
+            document.getElementById('inward-card').addEventListener('click', () => showTableModal('inward'));
+            document.getElementById('outward-card').addEventListener('click', () => showTableModal('outward'));
+            document.getElementById('net-card').addEventListener('click', () => showTableModal('net'));
+            
+            document.getElementById('close-table-modal').addEventListener('click', () => tableModal.classList.add('hidden'));
+            document.getElementById('cancel-edit').addEventListener('click', () => editModal.classList.add('hidden'));
+            document.getElementById('cancel-delete').addEventListener('click', () => deleteModal.classList.add('hidden'));
+            document.getElementById('confirm-delete').addEventListener('click', handleDeleteConfirmation);
+            modalStackFilter.addEventListener('change', handleModalFilterChange);
 
+            // Checkbox logic for main form
+            const madeupCheckbox = document.getElementById('madeup-checkbox');
+            const countVanInput = document.getElementById('countVan');
+            madeupCheckbox.addEventListener('change', () => {
+                if (madeupCheckbox.checked) {
+                    countVanInput.value = 'Made-up';
+                    countVanInput.disabled = true;
+                } else {
+                    countVanInput.value = '';
+                    countVanInput.disabled = false;
+                }
+            });
+
+            // Checkbox logic for edit form
+            const editMadeupCheckbox = document.getElementById('edit-madeup-checkbox');
+            const editCountVanInput = document.getElementById('edit-countVan');
+             editMadeupCheckbox.addEventListener('change', () => {
+                if (editMadeupCheckbox.checked) {
+                    editCountVanInput.value = 'Made-up';
+                    editCountVanInput.disabled = true;
+                } else {
+                    editCountVanInput.value = '';
+                    editCountVanInput.disabled = false;
+                }
+            });
+        }
+        setupEventListeners();
+
+        // Firebase Listener
         onValue(transactionsRef, (snapshot) => {
-            allTransactions = snapshot.val();
+            allTransactions = snapshot.val() || {};
             updateSummary();
             loader.style.display = 'none';
             summarySection.classList.remove('hidden');
@@ -272,104 +258,119 @@
 
         function handleDataFormSubmit(e) {
             e.preventDefault();
-            
-            // ##### CHANGED: Logic to get Count Van value #####
-            const isMadeUp = madeUpCheckbox.checked;
-            const countVanValue = isMadeUp ? 'Made-up' : countVanInput.value;
+            const bags = Number(document.getElementById('bags').value);
+            const stackNumber = document.getElementById('stackNumber').value;
+            const countVan = document.getElementById('countVan').value;
+            const date = document.getElementById('date').value;
+
+            if (bags <= 0) {
+                showToast("Bags must be greater than 0.", false); return;
+            }
+            if (!stackNumber || !date || !countVan) {
+                showToast('Please fill all fields correctly.', false); return;
+            }
 
             const transaction = {
-                stackNumber: document.getElementById('stackNumber').value,
-                date: document.getElementById('date').value,
-                countVan: countVanValue, // Use the new value
-                commodity: selectedCommodityForSummary,
+                stackNumber: stackNumber,
+                date: date,
+                countVan: countVan,
+                commodity: selectedCommodity,
                 transactionType: document.getElementById('transactionType').value,
-                bags: Number(document.getElementById('bags').value),
+                bags: bags,
                 weight: Number(document.getElementById('weight').value),
                 timestamp: new Date().toISOString()
             };
 
-            // ##### CHANGED: Updated validation #####
-            if (!transaction.stackNumber || !transaction.date || (!isMadeUp && !transaction.countVan) || transaction.bags <= 0 || transaction.weight <= 0) {
-                showToast('Please fill all fields correctly.', false);
-                return;
-            }
-
             push(transactionsRef, transaction).then(() => {
                 showToast('Data submitted successfully!');
-                e.target.reset(); // This will clear all form fields
-                countVanInput.disabled = false; // Re-enable input after reset
-                dateInput.valueAsDate = new Date();
-            }).catch(err => showToast('Failed to submit data.', false));
+                e.target.reset();
+                document.getElementById('date').valueAsDate = new Date();
+                const countVanInput = document.getElementById('countVan');
+                countVanInput.disabled = false;
+            });
+        }
+        
+        function switchCommodity(commodity) {
+            selectedCommodity = commodity;
+            document.querySelectorAll('.commodity-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.commodity === commodity));
+            updateSummary();
         }
 
         function updateSummary() {
-            if (allTransactions === null) return;
-            document.getElementById('summary-title').textContent = `${selectedCommodityForSummary} - Stock Summary`;
-            let filtInB = 0, filtInW = 0, filtOutB = 0, filtOutW = 0, grandInB = 0, grandInW = 0, grandOutB = 0, grandOutW = 0;
-            for (const key in allTransactions) {
-                const tx = allTransactions[key];
-                if (tx.commodity === selectedCommodityForSummary) {
-                    if (tx.transactionType === 'inward') { filtInB += tx.bags; filtInW += tx.weight; } 
-                    else if (tx.transactionType === 'outward') { filtOutB += tx.bags; filtOutW += tx.weight; }
+            document.getElementById('summary-title').textContent = `${selectedCommodity} - Stock Summary`;
+            let [filtInB, filtInW, filtOutB, filtOutW] = [0, 0, 0, 0];
+            let [grandInB, grandInW, grandOutB, grandOutW] = [0, 0, 0, 0];
+
+            for(const tx of Object.values(allTransactions)) {
+                if (tx.commodity === selectedCommodity) {
+                    tx.transactionType === 'inward' ? (filtInB += tx.bags, filtInW += tx.weight) : (filtOutB += tx.bags, filtOutW += tx.weight);
                 }
-                if (tx.transactionType === 'inward') { grandInB += tx.bags; grandInW += tx.weight; } 
-                else if (tx.transactionType === 'outward') { grandOutB += tx.bags; grandOutW += tx.weight; }
+                tx.transactionType === 'inward' ? (grandInB += tx.bags, grandInW += tx.weight) : (grandOutB += tx.bags, grandOutW += tx.weight);
             }
-            const updateText = (elId, val) => document.getElementById(elId).childNodes[0].nodeValue = val.toLocaleString() + ' ';
-            updateText('totalInwardBags', filtInB); updateText('totalInwardWeight', filtInW.toFixed(3));
-            updateText('totalOutwardBags', filtOutB); updateText('totalOutwardWeight', filtOutW.toFixed(3));
-            updateText('netBags', (filtInB - filtOutB)); updateText('netWeight', (filtInW - filtOutW).toFixed(3));
-            updateText('grandTotalBags', (grandInB - grandOutB)); updateText('grandTotalWeight', (grandInW - grandOutW).toFixed(3));
+
+            updateTextContent('totalInwardBags', filtInB); updateTextContent('totalInwardWeight', filtInW.toFixed(3));
+            updateTextContent('totalOutwardBags', filtOutB); updateTextContent('totalOutwardWeight', filtOutW.toFixed(3));
+            updateTextContent('netBags', filtInB - filtOutB); updateTextContent('netWeight', (filtInW - filtOutW).toFixed(3));
+            updateTextContent('grandTotalBags', grandInB - grandOutB); updateTextContent('grandTotalWeight', (grandInW - grandOutW).toFixed(3));
+        }
+
+        function updateTextContent(elId, value) {
+            document.getElementById(elId).childNodes[0].nodeValue = value.toLocaleString() + ' ';
         }
 
         function showTableModal(type) {
-            let transactionsToShow = [];
-            let title = `${selectedCommodityForSummary} Transactions`;
-            if (allTransactions) {
-                transactionsToShow = Object.entries(allTransactions).filter(([id, tx]) => {
-                    if (tx.commodity !== selectedCommodityForSummary) return false;
-                    if (type === 'net') return true;
-                    return tx.transactionType === type;
-                }).map(([id, tx]) => ({ id, ...tx }));
-            }
-            if (type !== 'net') title = `${selectedCommodityForSummary} ${type.charAt(0).toUpperCase() + type.slice(1)} Transactions`;
-            document.getElementById('table-modal-title').textContent = title;
-            populateTable(transactionsToShow);
+            currentModalTransactions = Object.entries(allTransactions)
+                .filter(([id, tx]) => tx.commodity === selectedCommodity && (type === 'net' || tx.transactionType === type))
+                .map(([id, tx]) => ({ id, ...tx }));
+            
+            const typeText = type === 'net' ? 'All' : type.charAt(0).toUpperCase() + type.slice(1);
+            document.getElementById('table-modal-title').textContent = `${selectedCommodity} ${typeText} Transactions`;
+            
+            populateModalStackFilter(currentModalTransactions);
+            handleModalFilterChange();
             tableModal.classList.remove('hidden');
+        }
+
+        function populateModalStackFilter(transactions) {
+            const stackNumbers = [...new Set(transactions.map(tx => tx.stackNumber))].sort((a, b) => a - b);
+            modalStackFilter.innerHTML = '<option value="">All Stacks</option>';
+            stackNumbers.forEach(stack => modalStackFilter.add(new Option(stack, stack)));
+        }
+        
+        function handleModalFilterChange() {
+            const selectedStack = modalStackFilter.value;
+            const filtered = selectedStack ? currentModalTransactions.filter(tx => tx.stackNumber === selectedStack) : currentModalTransactions;
+            populateTable(filtered);
+            updateModalSummary(filtered);
+        }
+        
+        function updateModalSummary(transactions) {
+            const totalBags = transactions.reduce((sum, tx) => sum + tx.bags, 0);
+            const totalWeight = transactions.reduce((sum, tx) => sum + tx.weight, 0);
+            modalSummaryDisplay.innerHTML = `Total: <span class="font-bold text-blue-600">${totalBags.toLocaleString()}</span> Bags / <span class="font-bold text-blue-600">${totalWeight.toFixed(3)}</span> MT`;
         }
 
         function populateTable(transactions) {
             const tableBody = document.getElementById('transactions-table-body');
-            const noDataMsg = document.getElementById('no-data-message');
             tableBody.innerHTML = '';
-            if (transactions.length === 0) {
-                noDataMsg.classList.remove('hidden');
-            } else {
-                noDataMsg.classList.add('hidden');
+            document.getElementById('no-data-message').classList.toggle('hidden', transactions.length > 0);
+
+            if (transactions.length > 0) {
                 transactions.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
-                    const row = document.createElement('tr');
-                    row.className = 'border-b hover:bg-gray-50';
-                    row.innerHTML = `<td class="p-3">${tx.date}</td> <td class="p-3">${tx.stackNumber}</td> <td class="p-3">${tx.countVan}</td> <td class="p-3">${tx.bags}</td> <td class="p-3">${tx.weight.toFixed(3)}</td> <td class="p-3 flex space-x-3">
-                        <button data-id="${tx.id}" class="edit-btn action-btn text-blue-500 hover:text-blue-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"></path></svg></button>
-                        <button data-id="${tx.id}" class="delete-btn action-btn text-red-500 hover:text-red-700"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                    </td>`;
-                    tableBody.appendChild(row);
+                    tableBody.insertRow().innerHTML = `
+                        <td class="p-3">${tx.date}</td> <td class="p-3">${tx.stackNumber}</td>
+                        <td class="p-3">${tx.countVan}</td> <td class="p-3">${tx.bags.toLocaleString()}</td>
+                        <td class="p-3">${tx.weight.toFixed(3)}</td>
+                        <td class="p-3 flex space-x-3">
+                            <button data-id="${tx.id}" class="edit-btn action-btn text-blue-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"></path></svg></button>
+                            <button data-id="${tx.id}" class="delete-btn action-btn text-red-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </td>`;
                 });
+                document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openEditModal(e.currentTarget.dataset.id)));
+                document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => openDeleteModal(e.currentTarget.dataset.id)));
             }
-            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openEditModal(e.currentTarget.dataset.id)));
-            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => openDeleteModal(e.currentTarget.dataset.id)));
         }
         
-        // ##### NEW: Get Edit Modal elements #####
-        const editCountVanInput = document.getElementById('edit-countVanInput');
-        const editMadeUpCheckbox = document.getElementById('edit-madeUpCheckbox');
-        editMadeUpCheckbox.addEventListener('change', () => {
-            editCountVanInput.disabled = editMadeUpCheckbox.checked;
-            if (editMadeUpCheckbox.checked) {
-                editCountVanInput.value = '';
-            }
-        });
-
         function openEditModal(id) {
             const tx = allTransactions[id];
             document.getElementById('edit-transaction-id').value = id;
@@ -378,39 +379,37 @@
             document.getElementById('edit-bags').value = tx.bags;
             document.getElementById('edit-weight').value = tx.weight;
             
-            // ##### CHANGED: Logic to populate edit modal for Count Van #####
+            const editCountVanInput = document.getElementById('edit-countVan');
+            const editMadeupCheckbox = document.getElementById('edit-madeup-checkbox');
             if (tx.countVan === 'Made-up') {
-                editMadeUpCheckbox.checked = true;
-                editCountVanInput.value = '';
+                editMadeupCheckbox.checked = true;
+                editCountVanInput.value = 'Made-up';
                 editCountVanInput.disabled = true;
             } else {
-                editMadeUpCheckbox.checked = false;
+                editMadeupCheckbox.checked = false;
                 editCountVanInput.value = tx.countVan;
                 editCountVanInput.disabled = false;
             }
+            
             editModal.classList.remove('hidden');
         }
 
         function handleEditFormSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('edit-transaction-id').value;
-
-            // ##### CHANGED: Logic to get Count Van value from Edit Modal #####
-            const isMadeUp = document.getElementById('edit-madeUpCheckbox').checked;
-            const countVanValue = isMadeUp ? 'Made-up' : document.getElementById('edit-countVanInput').value;
-            
-            const updatedTx = {
-                ...allTransactions[id],
+            const updatedTx = { ...allTransactions[id],
                 date: document.getElementById('edit-date').value,
                 stackNumber: document.getElementById('edit-stackNumber').value,
-                countVan: countVanValue, // Use new value
+                countVan: document.getElementById('edit-countVan').value,
                 bags: Number(document.getElementById('edit-bags').value),
                 weight: Number(document.getElementById('edit-weight').value),
             };
+            if(updatedTx.bags <= 0) {
+                 showToast("Bags must be greater than 0.", false); return;
+            }
             update(ref(database, 'transactions/' + id), updatedTx).then(() => {
                 showToast('Transaction updated successfully!');
-                editModal.classList.add('hidden');
-                tableModal.classList.add('hidden');
+                editModal.classList.add('hidden'); tableModal.classList.add('hidden');
             }).catch(err => showToast('Update failed.', false));
         }
 
@@ -422,17 +421,15 @@
         function handleDeleteConfirmation() {
             if (!transactionIdToDelete) return;
             remove(ref(database, 'transactions/' + transactionIdToDelete)).then(() => {
-                showToast('Transaction deleted successfully!');
-                deleteModal.classList.add('hidden');
-                tableModal.classList.add('hidden');
+                showToast('Transaction deleted!');
+                deleteModal.classList.add('hidden'); tableModal.classList.add('hidden');
                 transactionIdToDelete = null;
             }).catch(err => showToast('Deletion failed.', false));
         }
         
         function showToast(message, isSuccess = true) {
             const toast = document.getElementById('toast');
-            const toastMessage = document.getElementById('toast-message');
-            toastMessage.textContent = message;
+            toast.querySelector('#toast-message').textContent = message;
             toast.className = toast.className.replace(/bg-gray-900|bg-red-600/, isSuccess ? 'bg-gray-900' : 'bg-red-600');
             toast.classList.remove('opacity-0', 'translate-y-2');
             setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-2'); }, 3000);
@@ -440,3 +437,4 @@
     </script>
 </body>
 </html>
+
