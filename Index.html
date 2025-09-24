@@ -11,11 +11,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Icons -->
-    <link href="https://unpkg.com/lucide@latest/dist/lucide.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-        .custom-card { box-shadow: 0 8px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; }
+        .custom-card { box-shadow: 0 8px GqaafEHQSnEyZqrjQT0r_6jXMaGQ12px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; }
         .clickable-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08); cursor: pointer; }
         .submit-btn { background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: all 0.3s ease; }
         .submit-btn:hover { box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
@@ -27,54 +26,78 @@
         .modal-content { background-color: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); max-height: 90vh; display: flex; flex-direction: column; }
         .action-btn { transition: all 0.2s ease; }
         .action-btn:hover { transform: scale(1.1); }
-        /* Style for number input to hide arrows */
         input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-          -webkit-appearance: none; 
-          margin: 0; 
-        }
-        input[type=number] {
-          -moz-appearance: textfield;
-        }
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
     </style>
 </head>
 <body class="antialiased text-gray-800">
-    <div class="container mx-auto max-w-screen-2xl py-8 px-1 sm:px-6 lg:px-8">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">RUDRANSH STOCK</h1>
-        </header>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
-            <!-- Left Side: Data Entry Form -->
-            <div class="w-full">
-                <div class="bg-white rounded-xl p-6 md:p-8 lg:p-10 custom-card h-full">
-                    <div class="mb-4 text-center">
-                        <label class="block text-base font-medium text-gray-700 mb-3">Select Commodity</label>
-                        <div class="flex justify-center space-x-4">
-                            <button type="button" data-commodity="Wheat" class="commodity-btn active">Wheat</button>
-                            <button type="button" data-commodity="Maize" class="commodity-btn">Maize</button>
-                        </div>
-                    </div>
-                     <div class="mb-5 text-center px-4">
-                        <label class="block text-sm font-medium text-gray-600 mb-2">Transaction Type</label>
-                        <div class="flex items-center justify-center gap-2">
-                            <select id="transactionType" required class="w-full max-w-xs px-4 py-2 border bg-white border-gray-300 rounded-lg">
-                                <option value="inward">Inward</option>
-                                <option value="outward">Outward</option>
-                            </select>
-                            <button type="button" id="save-tx-type-btn" title="Save Transaction Type" class="p-2 bg-blue-100 text-blue-700 rounded-lg"><i data-lucide="save" class="w-5 h-5"></i></button>
-                        </div>
-                    </div>
-                    <form id="data-form" class="space-y-4"><!-- Form fields... --></form>
+
+    <!-- Login Section -->
+    <div id="login-container" class="min-h-screen flex items-center justify-center bg-gray-50">
+        <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-md space-y-6">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-gray-800">RUDRANSH STOCK</h2>
+                <p class="mt-2 text-sm text-gray-600">Admin Login</p>
+            </div>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="password" class="sr-only">Password</label>
+                    <input id="password" name="password" type="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Password">
                 </div>
-            </div>
-            <!-- Right Side: Data Summary -->
-            <div class="w-full">
-                <div id="loader" class="flex justify-center items-center h-full"><div class="loader"></div></div>
-                <div id="summary-section" class="hidden space-y-5"><!-- Summary Cards... --></div>
-            </div>
+                <div>
+                    <button type="submit" class="w-full text-white font-bold py-3 px-4 rounded-lg submit-btn">
+                        Sign In
+                    </button>
+                </div>
+            </form>
+            <div id="login-loader" class="hidden justify-center items-center pt-4"><div class="loader"></div></div>
         </div>
     </div>
 
+    <!-- Main Dashboard Container (Initially Hidden) -->
+    <div id="dashboard-container" class="hidden">
+        <div class="container mx-auto max-w-screen-2xl py-8 px-1 sm:px-6 lg:px-8">
+            <header class="text-center mb-10 relative">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">RUDRANSH STOCK</h1>
+                <button id="logout-btn" class="absolute top-0 right-0 mt-2 mr-2 sm:mr-6 lg:mr-8 flex items-center gap-2 px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                    <span>Logout</span>
+                </button>
+            </header>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+                <!-- Left Side: Data Entry Form -->
+                <div class="w-full">
+                    <div class="bg-white rounded-xl p-6 md:p-8 lg:p-10 custom-card h-full">
+                        <div class="mb-4 text-center">
+                            <label class="block text-base font-medium text-gray-700 mb-3">Select Commodity</label>
+                            <div class="flex justify-center space-x-4">
+                                <button type="button" data-commodity="Wheat" class="commodity-btn active">Wheat</button>
+                                <button type="button" data-commodity="Maize" class="commodity-btn">Maize</button>
+                            </div>
+                        </div>
+                         <div class="mb-5 text-center px-4">
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Transaction Type</label>
+                            <div class="flex items-center justify-center gap-2">
+                                <select id="transactionType" required class="w-full max-w-xs px-4 py-2 border bg-white border-gray-300 rounded-lg">
+                                    <option value="inward">Inward</option>
+                                    <option value="outward">Outward</option>
+                                </select>
+                                <button type="button" id="save-tx-type-btn" title="Save Transaction Type" class="p-2 bg-blue-100 text-blue-700 rounded-lg"><i data-lucide="save" class="w-5 h-5"></i></button>
+                            </div>
+                        </div>
+                        <form id="data-form" class="space-y-4"><!-- Form fields... --></form>
+                    </div>
+                </div>
+                <!-- Right Side: Data Summary -->
+                <div class="w-full">
+                    <div id="loader" class="flex justify-center items-center h-full"><div class="loader"></div></div>
+                    <div id="summary-section" class="hidden space-y-5"><!-- Summary Cards... --></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Modals -->
     <div id="table-modal" class="modal-backdrop hidden">
         <div class="modal-content w-11/12 max-w-4xl">
@@ -136,6 +159,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyAgzs3GqaafEHQSnEyZqrjQT0r_6jXMaGQ",
@@ -148,14 +172,21 @@
         };
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-        const transactionsRef = ref(database, 'transactions');
+        const auth = getAuth(app);
 
+        // --- GLOBAL STATE ---
+        let transactionsRef = null;
         let selectedCommodity = 'Wheat';
         let allTransactions = {};
         let currentModalTransactionPool = [];
         let transactionIdToDelete = null;
 
-        // DOM Elements
+        // --- DOM Elements ---
+        const loginContainer = document.getElementById('login-container');
+        const dashboardContainer = document.getElementById('dashboard-container');
+        const loginForm = document.getElementById('login-form');
+        const loginLoader = document.getElementById('login-loader');
+        const logoutBtn = document.getElementById('logout-btn');
         const loader = document.getElementById('loader');
         const summarySection = document.getElementById('summary-section');
         const modalStackFilter = document.getElementById('modal-stack-filter');
@@ -165,6 +196,64 @@
         const editModal = document.getElementById('edit-modal');
         const deleteModal = document.getElementById('delete-modal');
 
+        // --- AUTHENTICATION ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                // User is signed in.
+                loginContainer.classList.add('hidden');
+                dashboardContainer.classList.remove('hidden');
+                
+                // Initialize app logic now that user is authenticated
+                initializeAppLogic();
+            } else {
+                // User is signed out.
+                dashboardContainer.classList.add('hidden');
+                loginContainer.classList.remove('hidden');
+                loginForm.reset();
+                loginLoader.classList.add('hidden');
+            }
+        });
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = "princekumar954684@gmail.com";
+            const password = loginForm.password.value;
+
+            loginLoader.classList.remove('hidden');
+
+            signInWithEmailAndPassword(auth, email, password)
+                .catch((error) => {
+                    console.error("Login failed:", error);
+                    showToast("Incorrect password. Please try again.", false);
+                    loginLoader.classList.add('hidden');
+                });
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth).catch(error => {
+                console.error("Logout failed:", error);
+                showToast("Logout failed. Please try again.", false);
+            });
+        });
+
+        // --- APP INITIALIZATION (Called after login) ---
+        function initializeAppLogic() {
+            // Setup DB reference. This must be done after auth.
+            transactionsRef = ref(database, 'transactions');
+            
+            setupForms();
+            setupEventListeners();
+            
+            // Firebase Listener for real-time data
+            onValue(transactionsRef, (snapshot) => {
+                allTransactions = snapshot.val() || {};
+                updateSummary();
+                loader.style.display = 'none';
+                summarySection.classList.remove('hidden');
+            });
+        }
+
+        // --- UI & FORMS SETUP ---
         function setupForms() {
             document.querySelector('#data-form').innerHTML = `
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -238,8 +327,7 @@
             
             lucide.createIcons();
         }
-        setupForms();
-
+        
         function loadSavedData() {
             const savedStack = localStorage.getItem('savedStackNumber');
             const savedDate = localStorage.getItem('savedDate');
@@ -258,24 +346,24 @@
         }
 
         function setupEventListeners() {
-            document.getElementById('data-form').addEventListener('submit', handleDataFormSubmit);
-            document.getElementById('edit-form').addEventListener('submit', handleEditFormSubmit);
+            // Use querySelector for elements that are dynamically added
+            document.querySelector('#data-form').addEventListener('submit', handleDataFormSubmit);
+            document.querySelector('#edit-form').addEventListener('submit', handleEditFormSubmit);
 
             document.querySelectorAll('.commodity-btn').forEach(btn => btn.addEventListener('click', (e) => switchCommodity(e.target.dataset.commodity)));
             
-            document.getElementById('inward-card').addEventListener('click', () => showTableModal('inward'));
-            document.getElementById('outward-card').addEventListener('click', () => showTableModal('outward'));
-            document.getElementById('net-card').addEventListener('click', () => showTableModal('net'));
+            document.querySelector('#inward-card').addEventListener('click', () => showTableModal('inward'));
+            document.querySelector('#outward-card').addEventListener('click', () => showTableModal('outward'));
+            document.querySelector('#net-card').addEventListener('click', () => showTableModal('net'));
             
             document.getElementById('close-table-modal').addEventListener('click', () => tableModal.classList.add('hidden'));
-            document.getElementById('cancel-edit').addEventListener('click', () => editModal.classList.add('hidden'));
+            document.querySelector('#cancel-edit').addEventListener('click', () => editModal.classList.add('hidden'));
             document.getElementById('cancel-delete').addEventListener('click', () => deleteModal.classList.add('hidden'));
             document.getElementById('confirm-delete').addEventListener('click', handleDeleteConfirmation);
             modalStackFilter.addEventListener('change', applyModalFilters);
             modalTypeFilter.addEventListener('change', applyModalFilters);
 
-            // Save and Reset Listeners
-            document.getElementById('save-stack-btn').addEventListener('click', () => {
+            document.querySelector('#save-stack-btn').addEventListener('click', () => {
                 const stackValue = document.getElementById('stackNumber').value;
                 if (stackValue) {
                     localStorage.setItem('savedStackNumber', stackValue);
@@ -285,7 +373,7 @@
                 }
             });
 
-            document.getElementById('save-date-btn').addEventListener('click', () => {
+            document.querySelector('#save-date-btn').addEventListener('click', () => {
                 const dateValue = document.getElementById('date').value;
                 if (dateValue) {
                     localStorage.setItem('savedDate', dateValue);
@@ -293,13 +381,13 @@
                 }
             });
 
-            document.getElementById('save-tx-type-btn').addEventListener('click', () => {
+            document.querySelector('#save-tx-type-btn').addEventListener('click', () => {
                 const txTypeValue = document.getElementById('transactionType').value;
                 localStorage.setItem('savedTransactionType', txTypeValue);
                 showToast('Transaction type saved!');
             });
 
-            document.getElementById('reset-saved-btn').addEventListener('click', () => {
+            document.querySelector('#reset-saved-btn').addEventListener('click', () => {
                 localStorage.removeItem('savedStackNumber');
                 localStorage.removeItem('savedDate');
                 localStorage.removeItem('savedTransactionType');
@@ -309,9 +397,8 @@
                 showToast('Saved data has been reset.');
             });
 
-            // Checkbox logic for main form
-            const madeupCheckbox = document.getElementById('madeup-checkbox');
-            const countVanInput = document.getElementById('countVan');
+            const madeupCheckbox = document.querySelector('#madeup-checkbox');
+            const countVanInput = document.querySelector('#countVan');
             madeupCheckbox.addEventListener('change', () => {
                 if (madeupCheckbox.checked) {
                     countVanInput.value = 'Made-up';
@@ -321,10 +408,9 @@
                     countVanInput.disabled = false;
                 }
             });
-
-            // Checkbox logic for edit form
-            const editMadeupCheckbox = document.getElementById('edit-madeup-checkbox');
-            const editCountVanInput = document.getElementById('edit-countVan');
+            
+            const editMadeupCheckbox = document.querySelector('#edit-madeup-checkbox');
+            const editCountVanInput = document.querySelector('#edit-countVan');
              editMadeupCheckbox.addEventListener('change', () => {
                 if (editMadeupCheckbox.checked) {
                     editCountVanInput.value = 'Made-up';
@@ -337,44 +423,29 @@
             
             loadSavedData();
         }
-        setupEventListeners();
 
-        // Firebase Listener
-        onValue(transactionsRef, (snapshot) => {
-            allTransactions = snapshot.val() || {};
-            updateSummary();
-            loader.style.display = 'none';
-            summarySection.classList.remove('hidden');
-        });
-
+        // --- CORE LOGIC ---
         function handleDataFormSubmit(e) {
             e.preventDefault();
+            const form = e.target;
             const bags = Number(document.getElementById('bags').value);
             const stackNumber = document.getElementById('stackNumber').value;
             const countVan = document.getElementById('countVan').value;
             const date = document.getElementById('date').value;
 
-            if (bags <= 0) {
-                showToast("Bags must be greater than 0.", false); return;
-            }
-            if (!stackNumber || !date || !countVan.trim()) {
-                showToast('Please fill all fields correctly.', false); return;
-            }
+            if (bags <= 0) { showToast("Bags must be greater than 0.", false); return; }
+            if (!stackNumber || !date || !countVan.trim()) { showToast('Please fill all fields correctly.', false); return; }
+            if (!transactionsRef) { showToast('Database not connected. Please login again.', false); return; }
 
             const transaction = {
-                stackNumber: stackNumber,
-                date: date,
-                countVan: countVan.trim(),
-                commodity: selectedCommodity,
-                transactionType: document.getElementById('transactionType').value,
-                bags: bags,
-                weight: Number(document.getElementById('weight').value),
+                stackNumber: stackNumber, date: date, countVan: countVan.trim(),
+                commodity: selectedCommodity, transactionType: document.getElementById('transactionType').value,
+                bags: bags, weight: Number(document.getElementById('weight').value),
                 timestamp: new Date().toISOString()
             };
 
             push(transactionsRef, transaction).then(() => {
                 showToast('Data submitted successfully!');
-                const form = e.target;
                 form.bags.value = '';
                 form.weight.value = '';
                 form.countVan.value = '';
@@ -410,7 +481,8 @@
         }
 
         function updateTextContent(elId, value) {
-            document.getElementById(elId).childNodes[0].nodeValue = value.toLocaleString() + ' ';
+            const element = document.getElementById(elId);
+            if(element) element.childNodes[0].nodeValue = value.toLocaleString() + ' ';
         }
 
         function showTableModal(type) {
@@ -458,22 +530,14 @@
         
         function updateModalSummary(transactions) {
             const selectedType = modalTypeFilter.value;
-            let totalBags = 0;
-            let totalWeight = 0;
-            let summaryLabel = "Total:";
+            let totalBags = 0, totalWeight = 0, summaryLabel = "Total:";
 
             if (selectedType === 'all') {
                 let inwardBags = 0, inwardWeight = 0, outwardBags = 0, outwardWeight = 0;
                 transactions.forEach(tx => {
-                    const bags = Number(tx.bags) || 0;
-                    const weight = Number(tx.weight) || 0;
-                    if (tx.transactionType === 'inward') {
-                        inwardBags += bags;
-                        inwardWeight += weight;
-                    } else {
-                        outwardBags += bags;
-                        outwardWeight += weight;
-                    }
+                    const bags = Number(tx.bags) || 0, weight = Number(tx.weight) || 0;
+                    if (tx.transactionType === 'inward') { inwardBags += bags; inwardWeight += weight; } 
+                    else { outwardBags += bags; outwardWeight += weight; }
                 });
                 totalBags = inwardBags - outwardBags;
                 totalWeight = inwardWeight - outwardWeight;
@@ -493,25 +557,21 @@
 
             if (transactions.length > 0) {
                 transactions.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
-                    const bags = Number(tx.bags) || 0;
-                    const weight = Number(tx.weight) || 0;
+                    const bags = Number(tx.bags) || 0, weight = Number(tx.weight) || 0;
                     const typeClass = tx.transactionType === 'inward' ? 'text-green-600' : 'text-red-600';
                     const typeText = tx.transactionType === 'inward' ? 'In' : 'Out';
                     
                     tableBody.insertRow().innerHTML = `
-                        <td class="p-3">${tx.date}</td>
-                        <td class="p-3">${tx.stackNumber}</td>
-                        <td class="p-3">${tx.countVan}</td>
-                        <td class="p-3">${bags.toLocaleString()}</td>
-                        <td class="p-3">${weight.toFixed(3)}</td>
-                        <td class="p-3 font-semibold ${typeClass}">${typeText}</td>
+                        <td class="p-3">${tx.date}</td><td class="p-3">${tx.stackNumber}</td>
+                        <td class="p-3">${tx.countVan}</td><td class="p-3">${bags.toLocaleString()}</td>
+                        <td class="p-3">${weight.toFixed(3)}</td><td class="p-3 font-semibold ${typeClass}">${typeText}</td>
                         <td class="p-3 flex space-x-3">
                             <button data-id="${tx.id}" class="edit-btn action-btn text-blue-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"></path></svg></button>
                             <button data-id="${tx.id}" class="delete-btn action-btn text-red-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                         </td>`;
                 });
-                document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openEditModal(e.currentTarget.dataset.id)));
-                document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => openDeleteModal(e.currentTarget.dataset.id)));
+                tableBody.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openEditModal(e.currentTarget.dataset.id)));
+                tableBody.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => openDeleteModal(e.currentTarget.dataset.id)));
             }
         }
         
@@ -548,9 +608,9 @@
                 bags: Number(document.getElementById('edit-bags').value),
                 weight: Number(document.getElementById('edit-weight').value),
             };
-            if(updatedTx.bags <= 0) {
-                 showToast("Bags must be greater than 0.", false); return;
-            }
+            if(updatedTx.bags <= 0) { showToast("Bags must be greater than 0.", false); return; }
+            if(!transactionsRef) { showToast('Database error.', false); return; }
+
             update(ref(database, 'transactions/' + id), updatedTx).then(() => {
                 showToast('Transaction updated successfully!');
                 editModal.classList.add('hidden'); 
@@ -564,7 +624,7 @@
         }
         
         function handleDeleteConfirmation() {
-            if (!transactionIdToDelete) return;
+            if (!transactionIdToDelete || !transactionsRef) return;
             remove(ref(database, 'transactions/' + transactionIdToDelete)).then(() => {
                 showToast('Transaction deleted!');
                 deleteModal.classList.add('hidden');
@@ -583,5 +643,4 @@
     </script>
 </body>
 </html>
-
 
