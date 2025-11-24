@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STOCK</title>
+    <title>STOCK MANAGER</title>
 
     <link rel="icon" type="image/png" href="https://i.ibb.co/0wSg8RV/20250923-190600.png">
     <!-- Tailwind CSS -->
@@ -74,6 +74,42 @@
             align-items: center;
             height: 100vh;
         }
+
+        /* Toggle Switch Styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #4f46e5;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #4f46e5;
+        }
+        .toggle-label {
+            width: 44px;
+            height: 24px;
+            position: relative;
+            display: block;
+            background: #d1d5db;
+            border-radius: 200px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .toggle-label:after {
+            content: "";
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+        .toggle-checkbox:checked + .toggle-label:after {
+            left: calc(100% - 2px);
+            transform: translateX(-100%);
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -139,12 +175,11 @@
                         <span class="font-bold text-right text-base">
                             <span id="card-net-bags" class="text-blue-700 font-extrabold text-lg">0</span> Bags / 
                             <span id="card-net-weight" class="text-blue-700 font-extrabold text-lg">0.000</span> MT
-                             <!-- UPDATE: Average weight display added here -->
                             <span id="avg-weight-display" class="block text-xs font-semibold text-blue-800/80 hidden mt-1"></span>
                         </span>
                     </div>
                 </div>
-                <!-- UPDATE: Card Footer with Total Stacks and Date Range -->
+                <!-- Card Footer -->
                 <div id="card-footer" class="flex justify-between items-center text-xs text-gray-500 mt-4 pt-3 border-t border-gray-200">
                     <span id="card-date-range">Date Range: N/A</span>
                     <span id="total-stacks-display" class="font-medium">Total Stacks: <span class="font-bold text-gray-700">0</span></span>
@@ -201,18 +236,35 @@
                         <span id="calculator-display-weight" class="text-indigo-700">0.000</span> MT
                     </div>
                 </div>
-                <!-- Commodity Filters & Gross Inward Checkbox -->
-                <div class="flex justify-center items-center gap-4 mb-3 flex-wrap">
+                
+                <!-- Controls Row -->
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4 border-b pb-3 border-gray-100">
+                    <!-- Commodity Buttons -->
                     <div class="flex items-center gap-2">
                         <button class="calculator-btn active" data-commodity-filter="All">All</button>
                         <button class="calculator-btn" data-commodity-filter="Wheat">Wheat</button>
                         <button class="calculator-btn" data-commodity-filter="Maize">Maize</button>
                     </div>
-                    <div class="flex items-center border-l pl-3">
-                        <input type="checkbox" id="calculator-gross-checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        <label for="calculator-gross-checkbox" class="ml-2 text-sm font-medium text-gray-700">Gross Inward</label>
+
+                    <!-- Right Side Options -->
+                    <div class="flex items-center gap-4">
+                        <!-- Gross Inward Checkbox -->
+                        <div class="flex items-center">
+                            <input type="checkbox" id="calculator-gross-checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <label for="calculator-gross-checkbox" class="ml-2 text-sm font-medium text-gray-700">Gross Inward</label>
+                        </div>
+                        
+                        <!-- Multi-Select Toggle -->
+                        <div class="flex items-center gap-2 border-l pl-4 border-gray-300">
+                            <span class="text-xs font-semibold text-gray-600 uppercase tracking-wide">Multi</span>
+                            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" name="toggle" id="multi-select-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer hidden"/>
+                                <label for="multi-select-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
                 <!-- Checkbox List -->
                 <div id="stack-checkbox-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 text-sm max-h-40 overflow-y-auto p-2 border rounded-md bg-gray-50">
                     <!-- Checkboxes yahan JS se bhare jayenge -->
@@ -298,7 +350,16 @@
         const calculatorDisplayBags = document.getElementById('calculator-display-bags');
         const calculatorDisplayWeight = document.getElementById('calculator-display-weight');
         const calculatorGrossCheckbox = document.getElementById('calculator-gross-checkbox');
+        const multiSelectToggle = document.getElementById('multi-select-toggle');
+
         calculatorGrossCheckbox.addEventListener('change', updateCalculatorDisplay);
+        multiSelectToggle.addEventListener('change', () => {
+             // Optional: If you want to clear selection when switching modes, uncomment below
+             // document.querySelectorAll('.stack-calculator-checkbox').forEach(cb => cb.checked = false);
+             // updateCalculatorDisplay();
+             showToast(multiSelectToggle.checked ? "Multi-Select Mode ON" : "Single-Select Mode ON");
+        });
+
         document.querySelectorAll('.calculator-btn').forEach(btn => btn.addEventListener('click', (e) => {
             document.querySelectorAll('.calculator-btn').forEach(b => b.classList.remove('active'));
             e.currentTarget.classList.add('active');
@@ -357,7 +418,6 @@
                 allTransactions = Object.values(rawData);
                 
                 processMasterData(allTransactions);
-                 // UPDATE: Set total stacks count
                 document.querySelector('#total-stacks-display span').textContent = Object.keys(stackMasterData).length;
 
                 populateStackDropdown();
@@ -474,8 +534,7 @@
             document.getElementById('card-outward-weight').textContent = stats.outwardWeight.toFixed(3);
             document.getElementById('card-net-bags').textContent = netBags.toLocaleString();
             document.getElementById('card-net-weight').textContent = netWeight.toFixed(3);
-            
-            // UPDATE: Logic for Average Weight
+
             const avgWeightSpan = document.getElementById('avg-weight-display');
             const stackFilterValue = filterElements.stackNumber.value;
 
@@ -539,7 +598,6 @@
             if (selectedStackFilter) {
                 const selectedStackNetWeight = stackMasterData[selectedStackFilter]?.netWeight || 0;
                 let totalNetWeightOfAllStacks = 0;
-                // Calculate total net weight based on the currently selected commodity
                 Object.keys(stackMasterData).forEach(stackNum => {
                     if (selectedCommodityFilter === 'All' || stackMasterData[stackNum].commodities.has(selectedCommodityFilter)) {
                          totalNetWeightOfAllStacks += stackMasterData[stackNum].netWeight;
@@ -584,7 +642,7 @@
             if (pieChart) pieChart.destroy();
             
             const totalDataValue = chartConfig.data.reduce((a, b) => a + b, 0);
-            if (totalDataValue <= 0.001) { // Use a small threshold for floating point
+            if (totalDataValue <= 0.001) { 
                  ctx.clearRect(0, 0, canvas.width, canvas.height);
                  ctx.save();
                  ctx.textAlign = 'center';
@@ -661,8 +719,23 @@
                 }
             });
 
+            // Logic Update: Handle Click Events based on Mode
             document.querySelectorAll('.stack-calculator-checkbox').forEach(cb => {
-                cb.addEventListener('change', updateCalculatorDisplay);
+                cb.addEventListener('change', function(e) {
+                    const isMultiMode = multiSelectToggle.checked;
+                    
+                    // IF Multi-mode OFF (Single mode) AND checkbox is now Checked
+                    if (!isMultiMode && this.checked) {
+                        // Uncheck all other boxes
+                        document.querySelectorAll('.stack-calculator-checkbox').forEach(other => {
+                            if (other !== this) {
+                                other.checked = false;
+                            }
+                        });
+                    }
+                    
+                    updateCalculatorDisplay();
+                });
             });
             updateCalculatorDisplay();
         }
