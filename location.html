@@ -3,90 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WhatsApp Add Request</title>
+    <title>Connect on WhatsApp Business</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #ece5dd;
-            font-family: Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-        .chat-pattern {
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            opacity: 0.08;
+        .wb-header {
+            background-color: #00a884; /* WhatsApp Business Color */
+            height: 120px;
+            width: 100%;
             position: absolute;
             top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             z-index: 0;
-            pointer-events: none;
         }
         .card {
-            backdrop-filter: blur(5px);
-            transition: transform 0.3s ease;
+            box-shadow: 0 17px 50px 0 rgba(11,20,26,.19), 0 12px 15px 0 rgba(11,20,26,.24);
         }
-        .whatsapp-btn {
-            background: linear-gradient(90deg, #25D366 0%, #128C7E 100%);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        .btn-business {
+            background-color: #00a884;
+            transition: background-color 0.3s;
         }
-        .whatsapp-btn:active {
-            transform: scale(0.95);
+        .btn-business:hover {
+            background-color: #008f6f;
         }
-        .whatsapp-btn:hover {
-            box-shadow: 0 10px 15px -3px rgba(37, 211, 102, 0.3);
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            background-color: #00a884;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen relative overflow-hidden px-4">
+<body class="flex items-center justify-center min-h-screen relative px-4">
 
-    <div class="chat-pattern"></div>
+    <!-- Green Header Background -->
+    <div class="wb-header"></div>
 
-    <div class="card bg-white w-full max-w-sm rounded-2xl shadow-xl overflow-hidden relative z-10 border border-gray-100">
-        <!-- Header -->
-        <div class="bg-[#075E54] p-6 text-center relative">
-            <div class="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
-                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md p-1">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" class="w-full h-full">
-                </div>
+    <!-- Main Card -->
+    <div class="card bg-white w-full max-w-sm rounded-lg relative z-10 overflow-hidden">
+        
+        <!-- Profile Section -->
+        <div class="p-8 text-center border-b border-gray-100">
+            <div class="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4 border-4 border-white shadow-sm relative">
+                <!-- WB Icon -->
+                <i class="fab fa-whatsapp text-5xl text-[#00a884]"></i>
+                <div class="absolute bottom-0 right-0 bg-[#00a884] text-white text-xs px-1.5 py-0.5 rounded-full border-2 border-white font-bold">B</div>
             </div>
-            <h2 class="text-white text-lg font-medium tracking-wide">Contact Verification</h2>
-        </div>
-
-        <!-- Content -->
-        <div class="pt-10 pb-8 px-6 text-center">
-            <p class="text-gray-600 mb-2 font-medium">Recipient Number</p>
-            <div class="text-2xl font-bold text-gray-800 mb-6 tracking-wider font-mono">+91 79036 98180</div>
             
-            <p class="text-sm text-gray-500 mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                Click below to open WhatsApp with the command code pre-typed.
-            </p>
-
-            <!-- Main Button -->
-            <button onclick="openWhatsApp()" class="whatsapp-btn w-full text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 text-lg shadow-md group">
-                <i class="fab fa-whatsapp text-2xl group-hover:rotate-12 transition-transform"></i>
-                <span>Open WhatsApp</span>
-            </button>
+            <h2 class="text-xl font-bold text-gray-800">Business Support</h2>
+            <div class="flex items-center justify-center mt-2 text-sm text-gray-500">
+                <span class="status-dot"></span>
+                <span>Online now</span>
+            </div>
+            <p class="mt-4 text-2xl font-mono font-semibold text-gray-700">+91 79036 98180</p>
         </div>
 
-        <!-- Footer -->
-        <div class="bg-gray-50 p-4 text-center border-t border-gray-100">
-            <p class="text-xs text-gray-400">Command: <span class="font-mono bg-gray-200 px-1 rounded text-gray-600">/Add</span></p>
+        <!-- Action Area -->
+        <div class="p-6 bg-gray-50">
+            <div class="bg-white p-3 rounded border border-gray-200 mb-6 flex items-center">
+                <i class="fas fa-comment-alt text-gray-300 mr-3"></i>
+                <span class="text-gray-500 font-mono text-sm">/Add</span>
+            </div>
+
+            <button onclick="openBusinessChat()" class="btn-business w-full text-white font-bold py-3 px-4 rounded shadow-md flex items-center justify-center gap-2">
+                <span>Chat on WhatsApp Business</span>
+                <i class="fas fa-external-link-alt text-sm"></i>
+            </button>
+            
+            <p class="text-xs text-center text-gray-400 mt-4">
+                Clicking will open the app with the message pre-filled.
+            </p>
         </div>
     </div>
 
     <script>
-        function openWhatsApp() {
-            // Configuration
-            const phoneNumber = "917903698180"; 
+        function openBusinessChat() {
+            const phoneNumber = "917903698180";
             const message = "/Add";
+            const encodedMessage = encodeURIComponent(message);
             
-            // Build the URL
-            // Using wa.me ensures it works on both Mobile App and WhatsApp Web
-            const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-            
-            // Redirect
-            window.open(url, '_blank');
+            // User Agent Check for Android
+            const isAndroid = navigator.userAgent.toLowerCase().indexOf("android") > -1;
+
+            if (isAndroid) {
+                // Android specific intent to force WhatsApp Business (com.whatsapp.w4b)
+                // Note: Agar user ke paas Business app nahi hai, to ye fail ho sakta hai,
+                // isliye hum timeout lagake fallback bhi rakhenge.
+                
+                const businessIntent = `intent://send?phone=${phoneNumber}&text=${encodedMessage}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`;
+                
+                // Try to open Business App directly
+                window.location.href = businessIntent;
+                
+                // Fallback (Safe side ke liye, agar intent fail ho jaye)
+                setTimeout(() => {
+                    window.location.href = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+                }, 2000); // 2 second wait karega
+
+            } else {
+                // iOS / Desktop / Other
+                // Standard link jo user se app choose karne ko kahega
+                window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+            }
         }
     </script>
 </body>
