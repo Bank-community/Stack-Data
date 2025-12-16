@@ -2,216 +2,364 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moisture Analysis Report</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Moisture Analyzer Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Library for PDF Generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 3px; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f4f8;
+            -webkit-tap-highlight-color: transparent;
+        }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+        /* Mobile-first scrollbar hiding */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-        /* Print Specific Styles */
-        @media print {
-            body { background: white; }
-            .no-print { display: none !important; }
-            .print-border { border: 1px solid #ddd; }
-            #results { display: block !important; }
-            .page-break { page-break-inside: avoid; }
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        .animate-pulse-soft { animation: pulse-soft 2s infinite; }
+
+        /* Glassmorphism for Header */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Input Styling */
+        .app-input {
+            transition: all 0.2s ease;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+        }
+        .app-input:focus {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Report Paper Texture effect */
+        .receipt-pattern {
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen p-2 md:p-6 text-slate-800">
+<body class="bg-slate-50 text-slate-800 pb-24">
 
-    <div id="main-app" class="max-w-6xl mx-auto space-y-6">
-        
-        <!-- Header -->
-        <header class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 no-print">
-            <div>
-                <h1 class="text-2xl font-bold text-slate-800">Moisture & Gain Analyzer</h1>
-                <p class="text-slate-500 text-sm">Calculate Inward vs Outward Efficiency</p>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="calculateAll()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-xl shadow-lg transition-transform active:scale-95 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 00-1-1H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v2a1 1 0 102 0V9z" clip-rule="evenodd" /></svg>
-                    Calculate
-                </button>
-            </div>
-        </header>
-
-        <!-- INPUT SECTION (Visible on Screen, Hidden in pure Report mode unless needed) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 no-print">
-            
-            <!-- INWARD INPUTS -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[450px]">
-                <div class="bg-emerald-50 p-3 border-b border-emerald-100 flex justify-between items-center">
-                    <h2 class="font-bold text-emerald-800 text-sm flex items-center gap-2">INWARD (Aayak)</h2>
-                    <span class="text-xs font-semibold text-emerald-600 bg-emerald-100 px-2 py-1 rounded">Stock In</span>
+    <!-- Sticky Header -->
+    <header class="glass-header fixed top-0 w-full z-50 px-4 py-4 shadow-sm">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 3.667c3.21 0 4.1-1.667 4.1-1.667H4.9s.89 1.667 4.1 1.667M9 7v6.333c-3.21 0-4.1 1.667-4.1 1.667h14.2s-.89-1.667-4.1-1.667V7" />
+                    </svg>
                 </div>
-                <div class="p-3 bg-slate-50 grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-500 uppercase">
-                    <div class="col-span-5 pl-2">Weight (MT)</div>
-                    <div class="col-span-5">Moisture (%)</div>
-                    <div class="col-span-2 text-center">Del</div>
-                </div>
-                <div id="inward-container" class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-white"></div>
-                <div class="p-3 border-t border-slate-100">
-                    <button onclick="addRow('inward')" class="w-full py-2 border border-dashed border-emerald-300 text-emerald-600 rounded hover:bg-emerald-50 text-sm font-semibold">+ Add Row</button>
-                </div>
-            </div>
-
-            <!-- OUTWARD INPUTS -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col h-[450px]">
-                <div class="bg-amber-50 p-3 border-b border-amber-100 flex justify-between items-center">
-                    <h2 class="font-bold text-amber-800 text-sm flex items-center gap-2">OUTWARD (Jaavak)</h2>
-                    <span class="text-xs font-semibold text-amber-600 bg-amber-100 px-2 py-1 rounded">Stock Out</span>
-                </div>
-                <div class="p-3 bg-slate-50 grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-500 uppercase">
-                    <div class="col-span-5 pl-2">Weight (MT)</div>
-                    <div class="col-span-5">Moisture (%)</div>
-                    <div class="col-span-2 text-center">Del</div>
-                </div>
-                <div id="outward-container" class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar bg-white"></div>
-                <div class="p-3 border-t border-slate-100">
-                    <button onclick="addRow('outward')" class="w-full py-2 border border-dashed border-amber-300 text-amber-600 rounded hover:bg-amber-50 text-sm font-semibold">+ Add Row</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- REPORT AREA (This part gets downloaded) -->
-        <div id="report-area" class="hidden bg-white p-8 rounded-xl shadow-lg border border-slate-200 animate-fade-in max-w-4xl mx-auto">
-            
-            <!-- Report Header -->
-            <div class="border-b-2 border-slate-800 pb-4 mb-6 flex justify-between items-end">
                 <div>
-                    <h1 class="text-3xl font-bold text-slate-900">Analysis Report</h1>
-                    <p class="text-slate-500 text-sm mt-1" id="report-date">Date: </p>
-                </div>
-                <div class="text-right">
-                    <p class="text-xs text-slate-400 uppercase tracking-widest">Status</p>
-                    <p id="report-status" class="text-xl font-bold text-slate-800">PENDING</p>
+                    <h1 class="text-xl font-bold text-slate-800 leading-none">Moist<span class="text-indigo-600">Analyzer</span></h1>
+                    <p class="text-xs text-slate-500 font-medium">Smart Calculation Tool</p>
                 </div>
             </div>
+            <button onclick="location.reload()" class="text-slate-400 hover:text-indigo-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            </button>
+        </div>
+    </header>
 
-            <!-- Summary Grid -->
-            <div class="grid grid-cols-2 gap-8 mb-8">
-                <!-- Inward Summary -->
-                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
-                    <h3 class="text-emerald-800 font-bold mb-2 border-b border-emerald-200 pb-1">INWARD SUMMARY</h3>
-                    <div class="flex justify-between text-sm mb-1"><span>Total Weight:</span> <span class="font-bold" id="rep-in-mt">0 MT</span></div>
-                    <div class="flex justify-between text-sm"><span>Avg Moisture:</span> <span class="font-bold" id="rep-in-moist">0%</span></div>
-                    <div class="mt-2 text-xs text-emerald-600">Total Entries: <span id="rep-in-count">0</span></div>
-                </div>
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto pt-24 px-4 space-y-6">
 
-                <!-- Outward Summary -->
-                <div class="bg-amber-50 p-4 rounded-lg border border-amber-100">
-                    <h3 class="text-amber-800 font-bold mb-2 border-b border-amber-200 pb-1">OUTWARD SUMMARY</h3>
-                    <div class="flex justify-between text-sm mb-1"><span>Total Weight:</span> <span class="font-bold" id="rep-out-mt">0 MT</span></div>
-                    <div class="flex justify-between text-sm"><span>Avg Moisture:</span> <span class="font-bold" id="rep-out-moist">0%</span></div>
-                    <div class="mt-2 text-xs text-amber-600">Total Entries: <span id="rep-out-count">0</span></div>
-                </div>
-            </div>
-
-            <!-- Final Result Box -->
-            <div class="bg-slate-800 text-white rounded-lg p-6 mb-6">
-                <div class="grid grid-cols-3 gap-4 text-center divide-x divide-slate-600">
-                    <div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Net Weight Change</div>
-                        <div class="text-2xl font-bold" id="rep-diff-mt">0 MT</div>
-                        <div class="text-sm text-slate-400" id="rep-diff-kg">0 kg</div>
+        <!-- Input Section Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Inward Card -->
+            <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col h-[450px] animate-slide-up" style="animation-delay: 0.1s;">
+                <!-- Card Header -->
+                <div class="bg-emerald-50/80 p-4 border-b border-emerald-100 backdrop-blur-sm flex justify-between items-center sticky top-0 z-10">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-8 bg-emerald-500 rounded-full"></div>
+                        <div>
+                            <h2 class="font-bold text-emerald-900">INWARD (Aayak)</h2>
+                            <p class="text-[10px] text-emerald-600 font-bold tracking-wider uppercase">Purchased Stock</p>
+                        </div>
                     </div>
-                    <div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Moisture Diff</div>
-                        <div class="text-2xl font-bold" id="rep-diff-moist">0%</div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Net Gain/Loss</div>
-                        <div class="text-2xl font-bold" id="rep-percent">0%</div>
+                    <div class="bg-white p-1.5 rounded-lg shadow-sm border border-emerald-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                        </svg>
                     </div>
                 </div>
+
+                <!-- Column Headers -->
+                <div class="px-4 py-2 bg-slate-50 grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <div class="col-span-5 pl-1">Weight (MT)</div>
+                    <div class="col-span-5">Moist (%)</div>
+                    <div class="col-span-2 text-center">Del</div>
+                </div>
+
+                <!-- Scrollable Inputs -->
+                <div id="inward-container" class="flex-1 overflow-y-auto p-4 space-y-3 hide-scrollbar relative">
+                    <!-- Rows injected here -->
+                </div>
+
+                <!-- Add Button -->
+                <div class="p-4 bg-gradient-to-t from-white via-white to-transparent">
+                    <button onclick="addRow('inward')" class="w-full py-3 border-2 border-dashed border-emerald-200 text-emerald-600 rounded-2xl hover:bg-emerald-50 hover:border-emerald-300 transition-all font-semibold flex items-center justify-center gap-2 active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                        </svg>
+                        Add Load Entry
+                    </button>
+                </div>
             </div>
 
-            <!-- Detailed Table (Optional for report) -->
-            <div class="mt-6">
-                <h4 class="text-sm font-bold text-slate-600 uppercase mb-2">Detailed Breakdown</h4>
-                <table class="w-full text-sm text-left border border-slate-200">
-                    <thead class="bg-slate-100 text-slate-600">
-                        <tr>
-                            <th class="p-2 border-b">Type</th>
-                            <th class="p-2 border-b">Avg Moisture</th>
-                            <th class="p-2 border-b text-right">Total Weight</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        <tr>
-                            <td class="p-2 font-medium">Inward (Aayak)</td>
-                            <td class="p-2" id="tbl-in-moist">-</td>
-                            <td class="p-2 text-right" id="tbl-in-mt">-</td>
-                        </tr>
-                        <tr>
-                            <td class="p-2 font-medium">Outward (Jaavak)</td>
-                            <td class="p-2" id="tbl-out-moist">-</td>
-                            <td class="p-2 text-right" id="tbl-out-mt">-</td>
-                        </tr>
-                        <tr class="bg-slate-50 font-bold">
-                            <td class="p-2">Difference</td>
-                            <td class="p-2" id="tbl-diff-moist">-</td>
-                            <td class="p-2 text-right" id="tbl-diff-mt">-</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <!-- Outward Card -->
+            <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col h-[450px] animate-slide-up" style="animation-delay: 0.2s;">
+                <!-- Card Header -->
+                <div class="bg-amber-50/80 p-4 border-b border-amber-100 backdrop-blur-sm flex justify-between items-center sticky top-0 z-10">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-8 bg-amber-500 rounded-full"></div>
+                        <div>
+                            <h2 class="font-bold text-amber-900">OUTWARD (Jaavak)</h2>
+                            <p class="text-[10px] text-amber-600 font-bold tracking-wider uppercase">Sold Stock</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-1.5 rounded-lg shadow-sm border border-amber-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                        </svg>
+                    </div>
+                </div>
 
-            <!-- Download Buttons (Hidden in PDF) -->
-            <div class="mt-8 flex gap-3 justify-end no-print" data-html2canvas-ignore="true">
-                <button onclick="downloadCSV()" class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold py-2 px-4 rounded-lg flex items-center gap-2 text-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    Export CSV
-                </button>
-                <button onclick="downloadPDF()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 text-sm shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    Download PDF Report
+                <!-- Column Headers -->
+                <div class="px-4 py-2 bg-slate-50 grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                    <div class="col-span-5 pl-1">Weight (MT)</div>
+                    <div class="col-span-5">Moist (%)</div>
+                    <div class="col-span-2 text-center">Del</div>
+                </div>
+
+                <!-- Scrollable Inputs -->
+                <div id="outward-container" class="flex-1 overflow-y-auto p-4 space-y-3 hide-scrollbar relative">
+                    <!-- Rows injected here -->
+                </div>
+
+                <!-- Add Button -->
+                <div class="p-4 bg-gradient-to-t from-white via-white to-transparent">
+                    <button onclick="addRow('outward')" class="w-full py-3 border-2 border-dashed border-amber-200 text-amber-600 rounded-2xl hover:bg-amber-50 hover:border-amber-300 transition-all font-semibold flex items-center justify-center gap-2 active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                        </svg>
+                        Add Load Entry
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculate Floating Action Button (Mobile Style) -->
+        <div class="fixed bottom-6 left-0 w-full px-4 z-40 pointer-events-none">
+            <div class="max-w-4xl mx-auto flex justify-center pointer-events-auto">
+                <button onclick="calculateAll()" class="bg-slate-900 hover:bg-black text-white px-8 py-4 rounded-full shadow-2xl shadow-slate-900/40 font-bold text-lg flex items-center gap-3 transition-transform active:scale-95 animate-pulse-soft">
+                    <span>Calculate Result</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
                 </button>
             </div>
         </div>
 
-    </div>
+        <!-- RESULT MODAL / SECTION -->
+        <div id="result-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+            
+            <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 max-h-[90vh] flex flex-col" id="result-modal-content">
+                
+                <!-- Modal Header -->
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h3 class="font-bold text-lg text-slate-800">Analysis Summary</h3>
+                    <button onclick="closeResult()" class="p-2 bg-slate-200 rounded-full hover:bg-slate-300 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- CAPTURE AREA (The Report) -->
+                <div class="overflow-y-auto bg-slate-100 p-4 sm:p-6 custom-scrollbar">
+                    
+                    <div id="capture-area" class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-slate-200 relative receipt-pattern">
+                        
+                        <!-- Watermark/Logo -->
+                        <div class="absolute top-6 right-6 opacity-10 pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+
+                        <div class="mb-6 border-b-2 border-slate-800 pb-4">
+                            <h2 class="text-2xl font-black text-slate-900 uppercase tracking-tight">Final Report</h2>
+                            <div class="flex justify-between items-end mt-2">
+                                <p class="text-xs text-slate-500 font-mono" id="rep-date">--/--/----</p>
+                                <span id="rep-status" class="px-3 py-1 bg-gray-200 rounded text-xs font-bold uppercase">Pending</span>
+                            </div>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                                <p class="text-[10px] font-bold text-emerald-600 uppercase mb-1">Inward Total</p>
+                                <div class="text-lg font-bold text-emerald-900" id="rep-in-mt">0 MT</div>
+                                <div class="text-xs text-emerald-700 mt-1">Avg Moist: <span class="font-bold" id="rep-in-moist">0%</span></div>
+                            </div>
+                            <div class="p-4 bg-amber-50 rounded-xl border border-amber-100">
+                                <p class="text-[10px] font-bold text-amber-600 uppercase mb-1">Outward Total</p>
+                                <div class="text-lg font-bold text-amber-900" id="rep-out-mt">0 MT</div>
+                                <div class="text-xs text-amber-700 mt-1">Avg Moist: <span class="font-bold" id="rep-out-moist">0%</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Big Numbers -->
+                        <div class="bg-slate-900 text-white rounded-xl p-5 shadow-inner relative overflow-hidden">
+                            <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+                            
+                            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-700 pb-2">Net Calculation</h3>
+                            
+                            <div class="grid grid-cols-2 gap-y-6 gap-x-4">
+                                <div>
+                                    <p class="text-xs text-slate-400 mb-0.5">Net Weight (MT)</p>
+                                    <p class="text-2xl font-bold" id="rep-diff-mt">0.000</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400 mb-0.5">Net Weight (KG)</p>
+                                    <p class="text-2xl font-bold text-yellow-400" id="rep-diff-kg">0.0</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400 mb-0.5">Gain/Loss %</p>
+                                    <p class="text-lg font-bold" id="rep-percent">0.00%</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-slate-400 mb-0.5">Moist Diff</p>
+                                    <p class="text-lg font-bold" id="rep-diff-moist">0.00%</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex justify-between items-center border-t border-slate-100 pt-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xs">PR</div>
+                                <div class="text-[10px] leading-tight text-slate-400">
+                                    <p>Generated by</p>
+                                    <p class="font-bold text-slate-600">Prince Rama</p>
+                                </div>
+                            </div>
+                            <div class="h-8 w-24 bg-slate-100 rounded flex items-center justify-center">
+                                <div class="w-16 h-3 border-t-2 border-b-2 border-slate-300"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="p-4 bg-white border-t border-slate-100 flex gap-3">
+                    <button onclick="downloadImage()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 transition-transform active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Download Image
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-[60] text-sm font-medium flex items-center gap-2">
+            <span id="toast-icon">ℹ️</span>
+            <span id="toast-msg">Notification</span>
+        </div>
+
+    </main>
 
     <script>
-        // Set Date
-        document.getElementById('report-date').innerText = 'Date: ' + new Date().toLocaleString();
-
+        // --- LOGIC SECTION ---
+        
         function init() {
-            // Default rows
-            addRow('inward'); addRow('inward');
-            addRow('outward'); addRow('outward');
+            // Add initial rows
+            for(let i=0; i<3; i++) {
+                addRow('inward');
+                addRow('outward');
+            }
+        }
+
+        function showToast(msg, type='info') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-msg');
+            const iconEl = document.getElementById('toast-icon');
+            
+            msgEl.innerText = msg;
+            iconEl.innerText = type === 'error' ? '⚠️' : '✅';
+            toast.className = `fixed top-24 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl transition-all duration-300 z-[60] text-sm font-medium flex items-center gap-2 ${type === 'error' ? 'bg-red-500 text-white' : 'bg-slate-800 text-white'}`;
+            
+            toast.style.opacity = '1';
+            toast.style.transform = 'translate(-50%, 0)';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, -10px)';
+            }, 3000);
         }
 
         function addRow(type) {
             const container = document.getElementById(`${type}-container`);
             const div = document.createElement('div');
-            div.className = 'grid grid-cols-12 gap-2 items-center animate-fade-in mb-2';
+            
+            // Applying Animation Class
+            div.className = 'grid grid-cols-12 gap-2 items-center animate-slide-up';
+            
+            // Dynamic styling based on type
+            const focusColor = type === 'inward' ? 'focus:border-emerald-500 focus:ring-emerald-200' : 'focus:border-amber-500 focus:ring-amber-200';
+            
             div.innerHTML = `
                 <div class="col-span-5">
-                    <input type="number" step="0.01" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:border-blue-500 outline-none row-mt" placeholder="MT">
+                    <input type="number" step="0.01" class="app-input w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm ${focusColor} outline-none focus:ring-4 transition-all font-mono text-slate-700 row-mt" placeholder="0.00">
                 </div>
                 <div class="col-span-5">
-                    <input type="number" step="0.01" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm focus:border-blue-500 outline-none row-moist" placeholder="%">
+                    <input type="number" step="0.01" class="app-input w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm ${focusColor} outline-none focus:ring-4 transition-all font-mono text-slate-700 row-moist" placeholder="0%">
                 </div>
                 <div class="col-span-2 text-center">
-                    <button onclick="this.parentElement.parentElement.remove()" class="text-slate-400 hover:text-red-500 text-xs">✕</button>
+                    <button onclick="removeRow(this)" class="p-2 text-slate-300 hover:text-red-500 transition-colors rounded-full hover:bg-red-50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
                 </div>
             `;
             container.appendChild(div);
-            container.scrollTop = container.scrollHeight;
+            // Smooth scroll to bottom
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
+
+        function removeRow(btn) {
+            const row = btn.parentElement.parentElement;
+            row.style.opacity = '0';
+            row.style.transform = 'translateX(20px)';
+            setTimeout(() => row.remove(), 200);
         }
 
         function getSectionData(type) {
@@ -222,8 +370,12 @@
             let count = 0;
 
             for (let row of rows) {
-                const mt = parseFloat(row.querySelector('.row-mt').value) || 0;
-                const moist = parseFloat(row.querySelector('.row-moist').value) || 0;
+                const mtInput = row.querySelector('.row-mt');
+                const moistInput = row.querySelector('.row-moist');
+                
+                const mt = parseFloat(mtInput.value) || 0;
+                const moist = parseFloat(moistInput.value) || 0;
+                
                 if (mt > 0) {
                     totalWeight += mt;
                     totalProduct += (mt * moist);
@@ -243,100 +395,114 @@
             const outData = getSectionData('outward');
 
             if (inData.weight === 0 && outData.weight === 0) {
-                alert("Please enter data first.");
+                showToast("Please enter some data first!", "error");
                 return;
             }
 
-            // Logic
+            // Calculations
             const weightDiff = outData.weight - inData.weight;
             const weightDiffKg = weightDiff * 1000;
             const percentChange = inData.weight > 0 ? (weightDiff / inData.weight) * 100 : 0;
             const moistDiff = outData.avgMoist - inData.avgMoist;
 
-            // Update Report UI
+            // --- POPULATE REPORT CARD ---
+            const now = new Date();
+            document.getElementById('rep-date').innerText = now.toLocaleDateString() + " • " + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+            // Inward Data
             document.getElementById('rep-in-mt').innerText = inData.weight.toFixed(3) + " MT";
             document.getElementById('rep-in-moist').innerText = inData.avgMoist.toFixed(2) + "%";
-            document.getElementById('rep-in-count').innerText = inData.count;
 
+            // Outward Data
             document.getElementById('rep-out-mt').innerText = outData.weight.toFixed(3) + " MT";
             document.getElementById('rep-out-moist').innerText = outData.avgMoist.toFixed(2) + "%";
-            document.getElementById('rep-out-count').innerText = outData.count;
 
-            // Results
+            // Differences
             const sign = weightDiff > 0 ? "+" : "";
-            document.getElementById('rep-diff-mt').innerText = `${sign}${weightDiff.toFixed(3)} MT`;
-            document.getElementById('rep-diff-kg').innerText = `${sign}${weightDiffKg.toFixed(1)} kg`;
-            document.getElementById('rep-diff-moist').innerText = `${moistDiff > 0 ? '+' : ''}${moistDiff.toFixed(2)}%`;
+            document.getElementById('rep-diff-mt').innerText = `${sign}${weightDiff.toFixed(3)}`;
+            document.getElementById('rep-diff-kg').innerText = `${sign}${weightDiffKg.toFixed(1)}`;
             document.getElementById('rep-percent').innerText = `${sign}${percentChange.toFixed(2)}%`;
+            document.getElementById('rep-diff-moist').innerText = `${moistDiff > 0 ? '+' : ''}${moistDiff.toFixed(2)}%`;
 
-            // Table Update
-            document.getElementById('tbl-in-mt').innerText = inData.weight.toFixed(3);
-            document.getElementById('tbl-in-moist').innerText = inData.avgMoist.toFixed(2);
-            document.getElementById('tbl-out-mt').innerText = outData.weight.toFixed(3);
-            document.getElementById('tbl-out-moist').innerText = outData.avgMoist.toFixed(2);
-            document.getElementById('tbl-diff-mt').innerText = weightDiff.toFixed(3);
-            document.getElementById('tbl-diff-moist').innerText = moistDiff.toFixed(2);
-
-            // Styling based on Gain/Loss
-            const statusEl = document.getElementById('report-status');
+            // Status Styling
+            const statusEl = document.getElementById('rep-status');
+            const kgEl = document.getElementById('rep-diff-kg');
+            const percentEl = document.getElementById('rep-percent');
+            
             if (weightDiff >= 0) {
-                statusEl.innerText = "NET GAIN";
-                statusEl.className = "text-xl font-bold text-emerald-600";
+                statusEl.innerText = "PROFIT / GAIN";
+                statusEl.className = "px-3 py-1 bg-emerald-100 text-emerald-700 rounded text-xs font-bold uppercase";
+                kgEl.className = "text-2xl font-bold text-emerald-400";
+                percentEl.className = "text-lg font-bold text-emerald-400";
             } else {
-                statusEl.innerText = "NET LOSS";
-                statusEl.className = "text-xl font-bold text-red-600";
+                statusEl.innerText = "LOSS / SHORT";
+                statusEl.className = "px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-bold uppercase";
+                kgEl.className = "text-2xl font-bold text-red-400";
+                percentEl.className = "text-lg font-bold text-red-400";
             }
 
-            // Show Report Area
-            document.getElementById('report-area').classList.remove('hidden');
-            document.getElementById('report-area').scrollIntoView({ behavior: 'smooth' });
+            // Show Result Modal
+            const overlay = document.getElementById('result-overlay');
+            const content = document.getElementById('result-modal-content');
+            overlay.classList.remove('hidden');
+            // Trigger reflow
+            void overlay.offsetWidth;
+            overlay.style.opacity = '1';
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
             
-            // Update timestamp
-            document.getElementById('report-date').innerText = 'Date: ' + new Date().toLocaleString();
+            showToast("Calculation Complete!");
         }
 
-        function downloadPDF() {
-            const element = document.getElementById('report-area');
-            const opt = {
-                margin:       0.5,
-                filename:     'Moisture_Analysis_Report.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
+        function closeResult() {
+            const overlay = document.getElementById('result-overlay');
+            const content = document.getElementById('result-modal-content');
             
-            // Visual feedback
+            overlay.style.opacity = '0';
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 3000);
+        }
+
+        // --- IMAGE DOWNLOAD ---
+        function downloadImage() {
+            const captureElement = document.getElementById('capture-area');
             const btn = event.currentTarget;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = "Generating...";
+            const originalHTML = btn.innerHTML;
             
-            html2pdf().set(opt).from(element).save().then(() => {
-                btn.innerHTML = originalText;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...`;
+            btn.disabled = true;
+
+            html2canvas(captureElement, {
+                scale: 2,
+                backgroundColor: "#ffffff",
+                useCORS: true,
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'MoistAnalyzer_Report_' + Date.now() + '.png';
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+                
+                showToast("Report Downloaded!", "success");
+
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }).catch(err => {
+                console.error(err);
+                showToast("Failed to generate image", "error");
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
             });
         }
 
-        function downloadCSV() {
-            const inData = getSectionData('inward');
-            const outData = getSectionData('outward');
-            const diff = outData.weight - inData.weight;
-            
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Type,Weight (MT),Avg Moisture (%)\n";
-            csvContent += `Inward,${inData.weight.toFixed(3)},${inData.avgMoist.toFixed(2)}\n`;
-            csvContent += `Outward,${outData.weight.toFixed(3)},${outData.avgMoist.toFixed(2)}\n`;
-            csvContent += `Difference,${diff.toFixed(3)},${(outData.avgMoist - inData.avgMoist).toFixed(2)}\n`;
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "moisture_data.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
+        // Initialize app
         init();
     </script>
 </body>
 </html>
+
 
