@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Report Pro</title>
+
+    <link rel="icon" type="image/png" href="https://i.ibb.co/0wSg8RV/20250923-190600.png">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0"></script>
+
+    <!-- html2canvas for downloading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .loader {
+            border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #3b82f6;
+            width: 24px; height: 24px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Vertical Card Specific Styles to match Screenshot */
+        .report-box { border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+        .box-inward { background-color: #ecfdf5; border: 1px solid #d1fae5; } /* Green-50 */
+        .box-outward { background-color: #fef2f2; border: 1px solid #fee2e2; } /* Red-50 */
+        .box-net { background-color: #eff6ff; border: 1px solid #dbeafe; } /* Blue-50 */
+        .box-avg { background-color: #f3f4f6; border: 1px solid #e5e7eb; } /* Gray-100 */
+        
+        .label-text { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;}
+        .value-main { font-size: 1.25rem; font-weight: 800; line-height: 1.2; }
+        .value-sub { font-size: 0.85rem; font-weight: 600; opacity: 0.8; }
+
+        /* Smooth fade in */
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="flex justify-center items-center h-screen bg-gray-100">
+        <div class="w-full max-w-sm p-8 bg-white rounded-2xl shadow-xl text-center">
+            <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="ph-fill ph-lock-key text-3xl text-blue-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Stock Manager</h2>
+            <input id="password" type="password" inputmode="numeric" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none mb-4 text-center text-lg" placeholder="Enter Password">
+            <p id="login-error" class="text-red-500 text-sm mb-4 hidden">Incorrect Password</p>
+            <button id="login-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">Login</button>
+        </div>
+    </div>
+    
+    <div id="app-container" class="container mx-auto max-w-lg py-6 px-4 hidden">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-xl font-extrabold text-gray-800">Dashboard</h1>
+                <p class="text-xs text-gray-500">Real-time Stock Overview</p>
+            </div>
+            <button id="logout-btn" class="p-2 bg-white rounded-full shadow-sm text-gray-600 hover:text-red-600 transition">
+                <i class="ph-bold ph-sign-out text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 space-y-3">
+            
+            <!-- Row 1: Party & Commodity -->
+            <div class="grid grid-cols-2 gap-3">
+                <!-- Party Filter (New) -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Party Name</label>
+                    <div class="relative">
+                        <select id="filter-party" class="w-full bg-blue-50 border border-blue-100 text-blue-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-bold appearance-none">
+                            <option value="">All Parties</option>
+                            <!-- Options populated by JS -->
+                        </select>
+                        <i class="ph-bold ph-caret-down absolute right-3 top-3 text-blue-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- Commodity Filter -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Commodity</label>
+                    <div class="relative">
+                        <select id="filter-commodity" class="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-semibold appearance-none">
+                            <option value="All">All</option>
+                            <option value="Wheat">Wheat</option>
+                            <option value="Maize">Maize</option>
+                        </select>
+                        <i class="ph-bold ph-caret-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: Stack No (Full Width) -->
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Stack Selection</label>
+                <div class="relative">
+                    <select id="filter-stackNumber" class="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 font-semibold appearance-none">
+                        <option value="">Select Stack to View Details</option>
+                        <!-- Options populated by JS -->
+                    </select>
+                    <i class="ph-bold ph-caret-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN DISPLAY AREA -->
+        <div id="main-display-area" class="mb-8">
+            
+            <!-- 1. PIE CHART (Default View) -->
+            <div id="pie-view" class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 text-center relative overflow-hidden">
+                <h3 class="text-gray-500 font-bold text-sm uppercase tracking-wider mb-4">Stock Distribution <span id="dist-subtitle" class="text-blue-500 font-extrabold ml-1"></span></h3>
+                <div class="relative h-64 mx-auto">
+                    <canvas id="stockPieChart"></canvas>
+                </div>
+                <div class="mt-4 flex justify-around text-center">
+                    <div>
+                        <span class="block text-xs text-gray-400 font-bold">Total Inward</span>
+                        <span id="total-in-display" class="font-bold text-gray-800">0 MT</span>
+                    </div>
+                    <div>
+                        <span class="block text-xs text-gray-400 font-bold">Net Stock</span>
+                        <span id="total-net-display" class="font-bold text-blue-600">0 MT</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. DETAILED VERTICAL CARD (Shown when Stack is Selected) -->
+            <div id="stack-view" class="hidden fade-in">
+                
+                <!-- The Capture Area -->
+                <div id="capture-card" class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden relative">
+                    <div class="p-6 space-y-4">
+                        
+                        <!-- Header: Party & Stack -->
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                                    <i class="ph-fill ph-user"></i> Party Name
+                                </span>
+                                <h2 id="card-party" class="text-2xl font-black text-gray-800 leading-tight mt-1">ITC</h2>
+                            </div>
+                            <div class="bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 text-right">
+                                <span class="block text-[10px] font-bold text-blue-400 uppercase">Stack No</span>
+                                <span id="card-stack-no" class="text-2xl font-black text-blue-600">#1</span>
+                            </div>
+                        </div>
+
+                        <!-- Info Row (Commodity & Date) -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-yellow-50 p-3 rounded-xl border border-yellow-100 flex items-center gap-3">
+                                <div class="bg-yellow-200 p-2 rounded-full text-yellow-700">
+                                    <i class="ph-fill ph-grains text-lg"></i>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-bold text-yellow-600 uppercase">Commodity</span>
+                                    <span id="card-commodity" class="font-bold text-gray-800 text-sm">Wheat</span>
+                                </div>
+                            </div>
+                            <div class="bg-purple-50 p-3 rounded-xl border border-purple-100 flex items-center gap-3">
+                                <div class="bg-purple-200 p-2 rounded-full text-purple-700">
+                                    <i class="ph-fill ph-calendar-blank text-lg"></i>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-bold text-purple-600 uppercase">Start Date</span>
+                                    <span id="card-date" class="font-bold text-gray-800 text-sm">01/04/2025</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Metrics Stack -->
+                        <div class="space-y-3 mt-2">
+                            <!-- Inward -->
+                            <div class="report-box box-inward">
+                                <span class="label-text text-green-700"><i class="ph-bold ph-arrow-circle-down"></i> Total Inward</span>
+                                <div class="flex justify-between items-baseline">
+                                    <span class="value-main text-green-900"><span id="card-in-bags">0</span> Bags</span>
+                                    <span class="value-sub text-green-700"><span id="card-in-weight">0.000</span> MT</span>
+                                </div>
+                            </div>
+
+                            <!-- Outward -->
+                            <div class="report-box box-outward">
+                                <span class="label-text text-red-700"><i class="ph-bold ph-arrow-circle-up"></i> Total Outward</span>
+                                <div class="flex justify-between items-baseline">
+                                    <span class="value-main text-red-900"><span id="card-out-bags">0</span> Bags</span>
+                                    <span class="value-sub text-red-700"><span id="card-out-weight">0.000</span> MT</span>
+                                </div>
+                            </div>
+
+                            <!-- Net Stock -->
+                            <div class="report-box box-net">
+                                <span class="label-text text-blue-700"><i class="ph-bold ph-equals"></i> Net Stock</span>
+                                <div class="flex justify-between items-baseline">
+                                    <span class="value-main text-blue-900"><span id="card-net-bags">0</span> Bags</span>
+                                    <span class="value-sub text-blue-700"><span id="card-net-weight">0.000</span> MT</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer (Avg Weight & Gain) -->
+                        <div class="grid grid-cols-1 gap-3">
+                            <div class="bg-gray-100 p-4 rounded-xl flex justify-between items-center">
+                                <span class="text-xs font-bold text-gray-500 uppercase flex items-center gap-1">
+                                    <i class="ph-fill ph-scales"></i> Avg Weight
+                                </span>
+                                <span class="text-xl font-black text-gray-800"><span id="card-avg">62.27</span> <span class="text-sm font-medium text-gray-500">Kg/Bag</span></span>
+                            </div>
+
+                            <!-- Gain Box (Hidden by default) -->
+                            <div id="card-gain-box" class="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-xl text-white shadow-lg hidden">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-emerald-100 uppercase flex items-center gap-1">
+                                        <i class="ph-fill ph-trend-up"></i> Weight Gain
+                                    </span>
+                                    <span class="text-xl font-black text-white">+<span id="card-gain-val">0</span> <span class="text-sm font-medium text-emerald-100">KG</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Watermark -->
+                    <div class="absolute bottom-2 right-4 text-[10px] text-gray-300 font-bold pointer-events-none">Generated by Stock Manager</div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-4 grid grid-cols-1 gap-3">
+                    <button id="download-card-btn" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:bg-gray-800 transition">
+                        <i class="ph-bold ph-download-simple"></i> Download This Report
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Special ITC Button (Only shows if ITC is relevant or just generally available) -->
+        <div class="mb-8 text-center">
+            <button id="download-itc-btn" class="text-sm font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition flex items-center justify-center gap-2 mx-auto">
+                <i class="ph-fill ph-files"></i> Download Full ITC Report Summary
+            </button>
+            <p class="text-[10px] text-gray-400 mt-1">Generates a summary card for all ITC stacks combined</p>
+        </div>
+
+        <!-- Transaction Table (Collapsible) -->
+        <details class="bg-white rounded-xl shadow-sm border border-gray-100 group">
+            <summary class="p-4 font-bold text-gray-700 cursor-pointer flex justify-between items-center">
+                <span>View Transactions</span>
+                <i class="ph-bold ph-caret-down group-open:rotate-180 transition"></i>
+            </summary>
+            <div class="p-4 overflow-x-auto">
+                <table class="w-full text-sm text-left whitespace-nowrap">
+                    <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                        <tr>
+                            <th class="p-2 rounded-l-lg">Date</th>
+                            <th class="p-2">Stack</th>
+                            <th class="p-2">Party</th> <!-- Added Party Column -->
+                            <th class="p-2">Type</th>
+                            <th class="p-2 text-right rounded-r-lg">Weight</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txn-table-body" class="divide-y divide-gray-100">
+                        <!-- Rows -->
+                    </tbody>
+                </table>
+            </div>
+        </details>
+
+    </div>
+
+    <!-- Firebase Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAgzs3GqaafEHQSnEyZqrjQT0r_6jXMaGQ",
+            authDomain: "re-store-7f2b3.firebaseapp.com",
+            databaseURL: "https://re-store-7f2b3-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "re-store-7f2b3",
+            storageBucket: "re-store-7f2b3.appspot.com",
+            messagingSenderId: "774895588253",
+            appId: "1:774895588253:web:dad6c0fed92bce7c39574"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        const userEmail = "jackprince79036@gmail.com";
+
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const partySelect = document.getElementById('filter-party'); // New
+        const stackSelect = document.getElementById('filter-stackNumber');
+        const commoditySelect = document.getElementById('filter-commodity');
+        const pieView = document.getElementById('pie-view');
+        const stackView = document.getElementById('stack-view');
+        const downloadBtn = document.getElementById('download-card-btn');
+        const downloadItcBtn = document.getElementById('download-itc-btn');
+
+        let allTransactions = [];
+        let stackMasterData = {};
+        let pieChart = null;
+
+        // Auth Listener
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                loginScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                loadData();
+            } else {
+                loginScreen.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+            }
+        });
+
+        // Login Function
+        document.getElementById('login-button').addEventListener('click', () => {
+            const pass = document.getElementById('password').value;
+            signInWithEmailAndPassword(auth, userEmail, pass).catch(() => {
+                document.getElementById('login-error').classList.remove('hidden');
+            });
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+        // Load Data
+        function loadData() {
+            onValue(ref(db, 'transactions'), (snap) => {
+                const data = snap.val() || {};
+                allTransactions = Object.values(data);
+                processData(allTransactions);
+                populatePartyDropdown(); // New: Populate Parties first
+                populateStackDropdown(); // Then Stacks
+                updateDisplay(); // Initial Render
+            });
+        }
+
+        function processData(txns) {
+            stackMasterData = {};
+            txns.forEach(tx => {
+                const s = tx.stackNumber;
+                if (!stackMasterData[s]) {
+                    stackMasterData[s] = {
+                        netBags: 0, netWeight: 0,
+                        inBags: 0, inWeight: 0,
+                        outBags: 0, outWeight: 0,
+                        dates: [], comm: new Set()
+                    };
+                }
+                const b = tx.bags || 0;
+                const w = tx.weight || 0;
+                stackMasterData[s].dates.push(new Date(tx.date));
+                stackMasterData[s].comm.add(tx.commodity);
+
+                if (tx.transactionType === 'inward') {
+                    stackMasterData[s].inBags += b;
+                    stackMasterData[s].inWeight += w;
+                    stackMasterData[s].netBags += b;
+                    stackMasterData[s].netWeight += w;
+                } else {
+                    stackMasterData[s].outBags += b;
+                    stackMasterData[s].outWeight += w;
+                    stackMasterData[s].netBags -= b;
+                    stackMasterData[s].netWeight -= w;
+                }
+            });
+        }
+
+        // --- PARTY NAME LOGIC ---
+        function getPartyName(stackNum) {
+            const s = parseInt(stackNum);
+            if (s === 7) return "Mano Enterprises";
+            if (s >= 1 && s <= 18) return "ITC";
+            if ([22, 23, 25, 26, 27].includes(s)) return "Tyagi KRISHI KENDRA";
+            if ([24, 28, 29, 30, 103, 105, 106].includes(s)) return "ITC";
+            if ([101, 102, 104].includes(s)) return "SHIVSHANKAR Trading";
+            return "General Party";
+        }
+
+        // Populate Party Dropdown (Unique names)
+        function populatePartyDropdown() {
+            const current = partySelect.value;
+            const parties = new Set();
+            Object.keys(stackMasterData).forEach(s => parties.add(getPartyName(s)));
+            
+            partySelect.innerHTML = '<option value="">All Parties</option>';
+            Array.from(parties).sort().forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.text = p;
+                partySelect.appendChild(opt);
+            });
+            partySelect.value = current;
+        }
+
+        // Populate Stack Dropdown (Filtered by selected party)
+        function populateStackDropdown() {
+            const current = stackSelect.value;
+            const selectedParty = partySelect.value;
+            
+            stackSelect.innerHTML = '<option value="">Select Stack (View Report)</option>';
+            
+            Object.keys(stackMasterData).sort((a,b)=>a-b).forEach(s => {
+                const pName = getPartyName(s);
+                // Only show stack if no party selected OR matches selected party
+                if (!selectedParty || pName === selectedParty) {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.text = `Stack ${s} - ${pName}`;
+                    stackSelect.appendChild(opt);
+                }
+            });
+
+            // If previously selected stack is no longer valid, reset selection
+            if (current && [...stackSelect.options].map(o=>o.value).includes(current)) {
+                stackSelect.value = current;
+            } else {
+                stackSelect.value = "";
+            }
+        }
+
+        // Event Listeners
+        partySelect.addEventListener('change', () => {
+            populateStackDropdown(); // Re-filter stacks based on party
+            updateDisplay();
+        });
+        stackSelect.addEventListener('change', updateDisplay);
+        commoditySelect.addEventListener('change', updateDisplay);
+
+        function updateDisplay() {
+            const selectedStack = stackSelect.value;
+            const filterComm = commoditySelect.value;
+            const filterParty = partySelect.value; // New
+
+            // Filter Transactions
+            const filteredTxns = allTransactions.filter(t => {
+                const pName = getPartyName(t.stackNumber);
+                const matchesParty = !filterParty || pName === filterParty;
+                const matchesStack = !selectedStack || t.stackNumber == selectedStack;
+                const matchesComm = filterComm === 'All' || t.commodity === filterComm;
+                
+                return matchesParty && matchesStack && matchesComm;
+            });
+
+            renderTable(filteredTxns);
+
+            // Update UI Subtitle
+            const subtitle = document.getElementById('dist-subtitle');
+            subtitle.innerText = filterParty ? `(${filterParty})` : "(All Parties)";
+
+            if (selectedStack) {
+                // SHOW CARD VIEW
+                pieView.classList.add('hidden');
+                stackView.classList.remove('hidden');
+                renderCard(selectedStack);
+            } else {
+                // SHOW PIE VIEW
+                stackView.classList.add('hidden');
+                pieView.classList.remove('hidden');
+                renderPie(filteredTxns);
+            }
+        }
+
+        function renderCard(stackNum) {
+            const d = stackMasterData[stackNum];
+            if(!d) return;
+
+            // Fill Data
+            document.getElementById('card-party').innerText = getPartyName(stackNum);
+            document.getElementById('card-stack-no').innerText = "#" + stackNum;
+            document.getElementById('card-commodity').innerText = Array.from(d.comm).join(', ');
+            
+            // Dates
+            const dates = d.dates.sort((a,b)=>a-b);
+            const dateStr = dates.length > 0 ? 
+                `${dates[0].getDate()}/${dates[0].getMonth()+1}/${dates[0].getFullYear().toString().slice(-2)}` : "N/A";
+            document.getElementById('card-date').innerText = dateStr;
+
+            // Stats
+            document.getElementById('card-in-bags').innerText = d.inBags.toLocaleString();
+            document.getElementById('card-in-weight').innerText = d.inWeight.toFixed(3);
+            document.getElementById('card-out-bags').innerText = d.outBags.toLocaleString();
+            document.getElementById('card-out-weight').innerText = d.outWeight.toFixed(3);
+            document.getElementById('card-net-bags').innerText = d.netBags.toLocaleString();
+            document.getElementById('card-net-weight').innerText = d.netWeight.toFixed(3);
+
+            // Average
+            const avg = d.netBags > 0 ? (d.netWeight * 1000 / d.netBags) : 0;
+            document.getElementById('card-avg').innerText = avg.toFixed(2);
+
+            // Gain
+            const gainBox = document.getElementById('card-gain-box');
+            if (d.outWeight > d.inWeight) {
+                const gain = (d.outWeight - d.inWeight) * 1000;
+                if(gain > 1) {
+                    document.getElementById('card-gain-val').innerText = gain.toFixed(1);
+                    gainBox.classList.remove('hidden');
+                } else { gainBox.classList.add('hidden'); }
+            } else {
+                gainBox.classList.add('hidden');
+            }
+        }
+
+        function renderPie(txns) {
+            // Simple Pie Chart Logic for Overview
+            let wheat = 0, maize = 0, totalIn = 0, totalNet = 0;
+            txns.forEach(t => {
+                const w = t.weight || 0;
+                if(t.transactionType === 'inward') {
+                    totalIn += w;
+                    totalNet += w;
+                    if(t.commodity === 'Wheat') wheat += w; else maize += w;
+                } else {
+                    totalNet -= w;
+                    if(t.commodity === 'Wheat') wheat -= w; else maize -= w;
+                }
+            });
+
+            document.getElementById('total-in-display').innerText = totalIn.toFixed(3) + " MT";
+            document.getElementById('total-net-display').innerText = totalNet.toFixed(3) + " MT";
+
+            const ctx = document.getElementById('stockPieChart').getContext('2d');
+            if(pieChart) pieChart.destroy();
+            pieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Wheat', 'Maize'],
+                    datasets: [{
+                        data: [Math.max(0, wheat), Math.max(0, maize)],
+                        backgroundColor: ['#f59e0b', '#10b981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function renderTable(txns) {
+            const tbody = document.getElementById('txn-table-body');
+            tbody.innerHTML = '';
+            txns.sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 50).forEach(t => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-2 text-xs font-medium text-gray-500">${t.date}</td>
+                        <td class="p-2 text-xs font-bold text-blue-600">#${t.stackNumber}</td>
+                        <td class="p-2 text-xs text-gray-600">${getPartyName(t.stackNumber)}</td>
+                        <td class="p-2 text-xs">
+                            <span class="${t.transactionType==='inward'?'text-green-600 bg-green-50':'text-red-600 bg-red-50'} px-2 py-1 rounded">
+                                ${t.transactionType==='inward'?'In':'Out'}
+                            </span>
+                        </td>
+                        <td class="p-2 text-right text-xs font-bold">${t.weight.toFixed(3)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- DOWNLOAD LOGIC ---
+        
+        // 1. Single Stack Download
+        downloadBtn.addEventListener('click', async () => {
+            const card = document.getElementById('capture-card');
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Generating...';
+            
+            try {
+                const canvas = await html2canvas(card, { scale: 2 });
+                const link = document.createElement('a');
+                link.download = `StockReport_Stack_${document.getElementById('card-stack-no').innerText}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            } catch(e) { alert('Error downloading'); }
+            
+            downloadBtn.innerHTML = originalText;
+        });
+
+        // 2. ITC TOTAL REPORT DOWNLOAD
+        downloadItcBtn.addEventListener('click', async () => {
+            // Calculate ITC Totals
+            let itcData = { inB:0, inW:0, outB:0, outW:0, netB:0, netW:0 };
+            let count = 0;
+            
+            Object.keys(stackMasterData).forEach(s => {
+                if(getPartyName(s) === 'ITC') {
+                    const d = stackMasterData[s];
+                    itcData.inB += d.inBags; itcData.inW += d.inWeight;
+                    itcData.outB += d.outBags; itcData.outW += d.outWeight;
+                    itcData.netB += d.netBags; itcData.netW += d.netWeight;
+                    count++;
+                }
+            });
+
+            if(count === 0) { alert('No ITC Stacks found!'); return; }
+
+            // Temporarily hijack the card view to show ITC Totals
+            const originalHTML = document.getElementById('capture-card').innerHTML;
+            
+            // Inject ITC Data
+            document.getElementById('card-party').innerText = "ITC LIMITED";
+            document.getElementById('card-stack-no').innerText = "ALL";
+            document.getElementById('card-commodity').innerText = "Total Summary";
+            document.getElementById('card-date').innerText = new Date().toLocaleDateString();
+            
+            document.getElementById('card-in-bags').innerText = itcData.inB.toLocaleString();
+            document.getElementById('card-in-weight').innerText = itcData.inW.toFixed(3);
+            document.getElementById('card-out-bags').innerText = itcData.outB.toLocaleString();
+            document.getElementById('card-out-weight').innerText = itcData.outW.toFixed(3);
+            document.getElementById('card-net-bags').innerText = itcData.netB.toLocaleString();
+            document.getElementById('card-net-weight').innerText = itcData.netW.toFixed(3);
+            
+            const avg = itcData.netB > 0 ? (itcData.netW * 1000 / itcData.netB) : 0;
+            document.getElementById('card-avg').innerText = avg.toFixed(2);
+            document.getElementById('card-gain-box').classList.add('hidden'); // Hide gain for aggregate
+
+            // Switch view if needed
+            stackView.classList.remove('hidden');
+            pieView.classList.add('hidden');
+
+            // Capture
+            downloadItcBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Processing...';
+            await new Promise(r => setTimeout(r, 500)); // Wait for render
+            
+            try {
+                const canvas = await html2canvas(document.getElementById('capture-card'), { scale: 2 });
+                const link = document.createElement('a');
+                link.download = `ITC_Full_Report_Summary.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            } catch(e) { console.log(e); }
+
+            // Restore
+            document.getElementById('capture-card').innerHTML = originalHTML;
+            downloadItcBtn.innerHTML = '<i class="ph-fill ph-files"></i> Download Full ITC Report Summary';
+            
+            // Re-render current selection if any
+            if(stackSelect.value) renderCard(stackSelect.value);
+            else {
+                stackView.classList.add('hidden');
+                pieView.classList.remove('hidden');
+            }
+        });
+
+    </script>
+</body>
+</html>
+
