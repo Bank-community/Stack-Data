@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ITC Rudransh Warehouse</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Plus Jakarta Sans for Premium Look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Premium Gradients */
+        .bg-gradient-premium { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .text-gradient-gold { background: linear-gradient(to right, #b45309, #d97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* Card Animations */
+        .menu-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .menu-card:active { transform: scale(0.97); }
+        .menu-card:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 h-screen flex flex-col overflow-hidden">
+
+    <!-- ================= TOP HEADER ================= -->
+    <header class="bg-white border-b border-slate-200 px-6 py-5 flex justify-between items-center z-20 shadow-sm shrink-0">
+        <div>
+            <p class="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-0.5">Dashboard</p>
+            <h1 class="text-xl font-extrabold text-slate-800 leading-none tracking-tight">ITC RUDRANSH <span class="text-blue-600">W/H</span></h1>
+        </div>
+        <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+            <i class="ph-fill ph-user text-xl"></i>
+        </div>
+    </header>
+
+    <!-- ================= MAIN CONTENT AREA ================= -->
+    <main class="flex-1 overflow-y-auto relative p-5 flex flex-col">
+
+        <!-- Hero Banner -->
+        <div class="bg-gradient-premium rounded-3xl p-6 text-white shadow-xl mb-8 relative overflow-hidden shrink-0">
+            <!-- Decorative Icon Background -->
+            <div class="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4">
+                <i class="ph-fill ph-warehouse text-9xl"></i>
+            </div>
+            
+            <div class="relative z-10">
+                <span class="inline-block bg-blue-500/20 border border-blue-400/30 text-blue-100 text-[10px] font-bold px-3 py-1 rounded-full mb-3">ADMIN ACCESS</span>
+                <h2 class="text-3xl font-bold mb-1">Hello,Prince Rama</h2>
+                <p class="text-slate-400 text-sm">Welcome back to Rudransh Warehouse.</p>
+            </div>
+        </div>
+
+        <!-- Spacer to push cards to bottom (optional, or keep them centered) -->
+        <!-- <div class="flex-1"></div> -->
+
+        <!-- Quick Access Label -->
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-1">Warehouse Tools</p>
+
+        <!-- ================= CARD GRID (LINKS) ================= -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            
+            <!-- 1. CALCULATOR CARD -->
+            <a href="calculator.html" class="menu-card bg-white p-5 rounded-2xl shadow-sm border border-slate-100 block group decoration-none">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center text-2xl mb-3 group-hover:bg-orange-500 group-hover:text-white transition-colors duration-300">
+                    <i class="ph-fill ph-calculator"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-lg">Calculator</h3>
+                <p class="text-[10px] text-slate-400 mt-1 font-medium uppercase tracking-wide">Weight & Bags</p>
+            </a>
+
+            <!-- 2. STOCK REPORT CARD (Main) -->
+            <a href="stock_downlod.html" class="menu-card bg-white p-5 rounded-2xl shadow-sm border border-slate-100 block group decoration-none relative overflow-hidden">
+                <!-- Highlight Indicator -->
+                <div class="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-blue-500/10 to-transparent rounded-bl-full"></div>
+                
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                    <i class="ph-fill ph-chart-pie-slice"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-lg">Stock Report</h3>
+                <p class="text-[10px] text-slate-400 mt-1 font-medium uppercase tracking-wide">Live Inventory</p>
+            </a>
+
+            <!-- 3. MOISTURE CARD -->
+            <a href="moisture.html" class="menu-card bg-white p-5 rounded-2xl shadow-sm border border-slate-100 block group decoration-none">
+                <div class="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-500 flex items-center justify-center text-2xl mb-3 group-hover:bg-cyan-500 group-hover:text-white transition-colors duration-300">
+                    <i class="ph-fill ph-drop-half-bottom"></i> <!-- Moisture Icon -->
+                </div>
+                <h3 class="font-bold text-slate-800 text-lg">Moisture</h3>
+                <p class="text-[10px] text-slate-400 mt-1 font-medium uppercase tracking-wide">Quality Check</p>
+            </a>
+
+            <!-- 4. DTR CARD -->
+            <a href="DTR.html" class="menu-card bg-white p-5 rounded-2xl shadow-sm border border-slate-100 block group decoration-none">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center text-2xl mb-3 group-hover:bg-purple-500 group-hover:text-white transition-colors duration-300">
+                    <i class="ph-fill ph-notebook"></i>
+                </div>
+                <h3 class="font-bold text-slate-800 text-lg">DTR Report</h3>
+                <p class="text-[10px] text-slate-400 mt-1 font-medium uppercase tracking-wide">Daily Transactions</p>
+            </a>
+
+        </div>
+
+        <!-- Footer Info -->
+        <div class="mt-auto text-center py-4">
+            <p class="text-[10px] text-slate-300 font-bold uppercase tracking-widest">Powered by Stock Manager Prince rama</p>
+        </div>
+
+    </main>
+
+</body>
+</html>
