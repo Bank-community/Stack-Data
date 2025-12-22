@@ -36,7 +36,6 @@
 
     <div class="container mx-auto max-w-3xl p-4 sm:p-6">
         
-        <!-- Header -->
         <header class="text-center mb-4">
             <h1 class="text-2xl font-bold text-gray-900 flex items-center justify-center gap-2">
                 Daily DTR Report
@@ -44,15 +43,12 @@
             <p id="date-display" class="text-sm text-gray-500 font-medium mt-1">Loading...</p>
         </header>
 
-        <!-- Error Box -->
         <div id="error-box" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-sm font-bold text-center">
             <span id="error-msg">Something went wrong.</span>
         </div>
 
-        <!-- Controls Row -->
         <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-wrap justify-between items-center gap-2">
             
-            <!-- Left Side: Edit & Reset -->
             <div class="flex gap-2">
                 <button id="editBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded text-xs flex items-center gap-1 shadow-sm transition">
                     <i class="ph-bold ph-pencil-simple"></i> Edit
@@ -63,7 +59,6 @@
                 </button>
             </div>
 
-            <!-- Right Side: WhatsApp -->
             <button id="whatsappShareBtn" class="bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-1.5 px-3 rounded text-xs flex items-center gap-1 shadow-sm transition">
                 <i class="ph-fill ph-whatsapp-logo text-base"></i>
                 Share
@@ -74,16 +69,13 @@
              <span id="statusMsg" class="text-[10px] font-bold text-green-600"></span>
         </div>
 
-        <!-- Main Report Area -->
         <main class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden relative min-h-[300px]">
             
-            <!-- Loading Overlay -->
             <div id="loading-overlay" class="absolute inset-0 bg-white z-10 flex flex-col items-center justify-center">
                 <div class="loader mb-2"></div>
                 <p class="text-xs text-gray-500 font-bold">Fetching Live Data...</p>
             </div>
 
-            <!-- Content -->
             <div class="p-6 md:p-8">
                 <pre id="reportContent" class="text-sm text-gray-800" contenteditable="false"></pre>
             </div>
@@ -94,7 +86,6 @@
         </div>
     </div>
 
-    <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
@@ -156,14 +147,14 @@
 
             if (!transactions) return "No data available.";
 
-            // Step A: Aggregate by Stack (Calculate Inward vs Outward separately)
+            // Step A: Aggregate by Stack
             let stackData = {};
             
             transactions.forEach(t => {
                 if(!t) return;
                 const s = parseInt(t.stackNumber);
                 
-                // Rule 1: Directly ignore stack 501
+                // Ignore stack 501
                 if (isNaN(s) || s === 501) return;
 
                 if (!stackData[s]) {
@@ -195,22 +186,28 @@
             Object.keys(stackData).forEach(stackNum => {
                 const data = stackData[stackNum];
                 
+                // ----------------------------------------------------
+                // NEW LOGIC: STRICT NIL CHECK
+                // ----------------------------------------------------
+                // 1. अगर Outward Bags >= Inward Bags है, तो यह Stack खाली/Nil है। इसे Skip करें।
+                if (data.outBags >= data.inBags) {
+                    return; 
+                }
+
                 // Calculate Net
                 const netBags = data.inBags - data.outBags;
                 const netWeight = data.inWeight - data.outWeight;
                 const cleanWeight = parseFloat(netWeight.toFixed(3));
 
-                // --- LOGIC UPDATE: STRICT NIL CHECK ---
-                // Agar Outward >= Inward hai (Matlab maal khatam ya jyada chala gaya), toh SKIP.
-                // Agar Net Bags 0 ya negative hai, toh SKIP.
-                if (data.outBags >= data.inBags || netBags <= 0 || cleanWeight <= 0.001) {
-                    return; // Skip this stack completely
+                // 2. सुरक्षा के लिए, अगर Net Bags 0 या उससे कम है (Negative), तो भी Skip करें।
+                if (netBags <= 0 || cleanWeight <= 0.001) {
+                    return;
                 }
+                // ----------------------------------------------------
 
                 const p = data.party;
                 if(p === "IGNORE") return;
 
-                // Group Key: Party + Commodity
                 const uniqueKey = `${p}_${data.commodity}`;
 
                 if (!groups[uniqueKey]) {
@@ -276,7 +273,6 @@
             const today = new Date().toDateString();
             const savedDate = localStorage.getItem(DATE_KEY);
 
-            // 12:00 AM Reset Logic
             if (savedDate && savedDate !== today) {
                 localStorage.removeItem(STORAGE_KEY);
                 localStorage.removeItem(DATE_KEY);
@@ -362,10 +358,8 @@
             window.open(url, '_blank');
         });
 
-        // Initialize
         loadData();
 
     </script>
 </body>
 </html>
-
