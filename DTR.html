@@ -163,7 +163,7 @@
                 if(!t) return;
                 const s = parseInt(t.stackNumber);
                 
-                // Ignore stack 501
+                // Ignore stack 501 immediately
                 if (isNaN(s) || s === 501) return;
 
                 if (!stackData[s]) {
@@ -175,13 +175,18 @@
                     };
                 }
 
-                const bags = Number(t.bags) || 0;
-                const weight = Number(t.weight) || 0;
+                // Robust Number Parsing (removes commas if any)
+                let bags = t.bags ? parseFloat(t.bags.toString().replace(/,/g, '')) : 0;
+                let weight = t.weight ? parseFloat(t.weight.toString().replace(/,/g, '')) : 0;
 
-                if (t.transactionType === 'inward') {
+                // Case insensitive check for transaction type
+                const type = t.transactionType ? t.transactionType.toLowerCase() : '';
+
+                if (type === 'inward') {
                     stackData[s].inBags += bags;
                     stackData[s].inWeight += weight;
                 } else {
+                    // All other types (outward, made-up etc) count as Outward here
                     stackData[s].outBags += bags;
                     stackData[s].outWeight += weight;
                 }
@@ -196,26 +201,30 @@
                 const data = stackData[stackNum];
                 
                 // ------------------------------------------------------------------
-                // CRITICAL UPDATE FOR ITC/GAIN LOGIC
+                // UPDATED LOGIC FOR GAIN / FINISHED STACKS
                 // ------------------------------------------------------------------
                 // Rule 1: अगर Outward Bags >= Inward Bags है -> Stack खत्म।
                 // Rule 2: अगर Outward Weight >= Inward Weight है -> Stack खत्म। 
-                // (भले ही Bags बचे हों, अगर वजन पूरा निकल गया मतलब माल खत्म या Gain होकर चला गया)
+                // (यह Gain वाले केस को भी हटा देगा, क्योंकि Gain का मतलब Out > In)
                 
-                if (data.outBags >= data.inBags || data.outWeight >= data.inWeight) {
+                const isBagsFinished = data.outBags >= data.inBags;
+                const isWeightFinished = data.outWeight >= data.inWeight;
+
+                if (isBagsFinished || isWeightFinished) {
                     return; // इस Stack को पूरी तरह छोड़ दो
                 }
+
+                // ------------------------------------------------------------------
 
                 // अगर यहाँ तक आये, मतलब माल बचा है।
                 const netBags = data.inBags - data.outBags;
                 const netWeight = data.inWeight - data.outWeight;
                 const cleanWeight = parseFloat(netWeight.toFixed(3));
 
-                // Safety check: Negative stock should never enter totals
+                // Safety check: Negative stock should never enter totals (Double confirm)
                 if (netBags <= 0 || cleanWeight <= 0.001) {
                     return;
                 }
-                // ------------------------------------------------------------------
 
                 const p = data.party;
                 if(p === "IGNORE") return;
@@ -375,4 +384,5 @@
     </script>
 </body>
 </html>
+
 
