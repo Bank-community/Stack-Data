@@ -114,7 +114,6 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        // UI Elements
         const reportEl = document.getElementById('reportContent');
         const loadingOverlay = document.getElementById('loading-overlay');
         const dateDisplay = document.getElementById('date-display');
@@ -136,7 +135,7 @@
             errorMsg.innerText = msg;
         }
 
-        // --- DATA PROCESSING ---
+        // --- PARTY NAME LOGIC ---
         function getPartyName(stackNum) {
             const s = parseInt(stackNum);
             if (isNaN(s)) return "Unknown";
@@ -157,17 +156,20 @@
 
             if (!transactions) return "No data available.";
 
-            // Step A: Aggregate by Stack
+            // Step A: Aggregate by Stack (Calculate Inward vs Outward separately)
             let stackData = {};
             
             transactions.forEach(t => {
                 if(!t) return;
                 const s = parseInt(t.stackNumber);
+                
+                // Rule 1: Directly ignore stack 501
                 if (isNaN(s) || s === 501) return;
 
                 if (!stackData[s]) {
                     stackData[s] = { 
-                        netBags: 0, netWeight: 0, 
+                        inBags: 0, outBags: 0,
+                        inWeight: 0, outWeight: 0,
                         commodity: t.commodity || 'Grain',
                         party: getPartyName(s)
                     };
@@ -177,32 +179,38 @@
                 const weight = Number(t.weight) || 0;
 
                 if (t.transactionType === 'inward') {
-                    stackData[s].netBags += bags;
-                    stackData[s].netWeight += weight;
+                    stackData[s].inBags += bags;
+                    stackData[s].inWeight += weight;
                 } else {
-                    stackData[s].netBags -= bags;
-                    stackData[s].netWeight -= weight;
+                    stackData[s].outBags += bags;
+                    stackData[s].outWeight += weight;
                 }
             });
 
-            // Step B: Group by Party AND Commodity
-            // Key format: "PartyName_CommodityName"
+            // Step B: Group by Party + Commodity with STRICT NIL CHECK
             let groups = {};
             let grandTotalBags = 0;
             let grandTotalWeight = 0;
 
             Object.keys(stackData).forEach(stackNum => {
                 const data = stackData[stackNum];
-                const cleanWeight = parseFloat(data.netWeight.toFixed(3));
+                
+                // Calculate Net
+                const netBags = data.inBags - data.outBags;
+                const netWeight = data.inWeight - data.outWeight;
+                const cleanWeight = parseFloat(netWeight.toFixed(3));
 
-                // Rule: Skip Nil/Negative Stock
-                if (data.netBags <= 0 || cleanWeight <= 0.001) return;
+                // --- LOGIC UPDATE: STRICT NIL CHECK ---
+                // Agar Outward >= Inward hai (Matlab maal khatam ya jyada chala gaya), toh SKIP.
+                // Agar Net Bags 0 ya negative hai, toh SKIP.
+                if (data.outBags >= data.inBags || netBags <= 0 || cleanWeight <= 0.001) {
+                    return; // Skip this stack completely
+                }
 
                 const p = data.party;
                 if(p === "IGNORE") return;
 
-                // Create a unique key combining Party and Commodity
-                // Example: "ITC_Wheat" vs "ITC_Maize"
+                // Group Key: Party + Commodity
                 const uniqueKey = `${p}_${data.commodity}`;
 
                 if (!groups[uniqueKey]) {
@@ -214,19 +222,19 @@
                     };
                 }
 
-                groups[uniqueKey].bags += data.netBags;
+                groups[uniqueKey].bags += netBags;
                 groups[uniqueKey].weight += cleanWeight;
 
-                grandTotalBags += data.netBags;
+                grandTotalBags += netBags;
                 grandTotalWeight += cleanWeight;
             });
 
             // Step C: Build Text
             let reportText = "";
-            const sortedKeys = Object.keys(groups).sort(); // Sorts alphabetically (ITC_Maize, ITC_Wheat, etc.)
+            const sortedKeys = Object.keys(groups).sort();
 
             if (sortedKeys.length === 0) {
-                return "All stocks are NIL or 501.";
+                return "All stacks are Nil (Finished). No stock pending.";
             }
 
             sortedKeys.forEach(key => {
@@ -263,12 +271,12 @@
             return reportText;
         }
 
-        // --- DATA FETCHING ---
+        // --- DATA LOADING & STORAGE ---
         function loadData() {
             const today = new Date().toDateString();
             const savedDate = localStorage.getItem(DATE_KEY);
 
-            // 12:00 AM Reset
+            // 12:00 AM Reset Logic
             if (savedDate && savedDate !== today) {
                 localStorage.removeItem(STORAGE_KEY);
                 localStorage.removeItem(DATE_KEY);
@@ -296,14 +304,14 @@
                             window.originalReportText = freshText;
                             errorBox.classList.add('hidden');
                         } catch (err) {
-                            showError("Data Error: " + err.message);
+                            showError("Processing Error: " + err.message);
                         }
                     } else {
-                        reportEl.innerText = "Empty Database.";
+                        reportEl.innerText = "Database Empty.";
                     }
                 }, (error) => {
                     loadingOverlay.classList.add('hidden');
-                    showError("Firebase Error: Permission Denied");
+                    showError("Firebase Error: " + error.message);
                 });
             }
         }
@@ -340,7 +348,7 @@
         });
 
         document.getElementById('resetBtn').addEventListener('click', () => {
-            if(confirm("Reset to actual live data?")) {
+            if(confirm("Reset to actual live data? (Manual edits will be lost)")) {
                 localStorage.removeItem(STORAGE_KEY);
                 localStorage.removeItem(DATE_KEY);
                 window.location.reload();
@@ -354,6 +362,7 @@
             window.open(url, '_blank');
         });
 
+        // Initialize
         loadData();
 
     </script>
