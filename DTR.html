@@ -95,10 +95,10 @@
     </div>
 
     <!-- Firebase Logic -->
-    <script type="module">
+        <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAgzs3GqaafEHQSnEyZqrjQT0r_6jXMaGQ",
@@ -124,12 +124,29 @@
         const STORAGE_KEY = 'savedDTRContent';
         const DATE_KEY = 'savedDTRDate';
 
-        // Login
-        signInWithEmailAndPassword(auth, "jackprince79036@gmail.com", "123456")
-            .catch((error) => {
-                showError(`Login Failed: ${error.message}`);
-                loadingOverlay.classList.add('hidden');
-            });
+        // --- AUTHENTICATION FIX ---
+        
+        // 1. Pehle listener lagayein jo login status check karega
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("User Logged In:", user.email);
+                // Login hone ke baad hi data load karein
+                loadData(); 
+            } else {
+                console.log("No user logged in yet, attempting login...");
+                // Agar login nahi hai to login karein
+                performLogin();
+            }
+        });
+
+        // 2. Login Function
+        function performLogin() {
+            signInWithEmailAndPassword(auth, "jackprince79036@gmail.com", "123456")
+                .catch((error) => {
+                    showError(`Login Failed: ${error.message}`);
+                    loadingOverlay.classList.add('hidden');
+                });
+        }
 
         function showError(msg) {
             errorBox.classList.remove('hidden');
@@ -186,7 +203,6 @@
             });
 
             // Step B: Group by Party AND Commodity
-            // Key format: "PartyName_CommodityName"
             let groups = {};
             let grandTotalBags = 0;
             let grandTotalWeight = 0;
@@ -195,14 +211,11 @@
                 const data = stackData[stackNum];
                 const cleanWeight = parseFloat(data.netWeight.toFixed(3));
 
-                // Rule: Skip Nil/Negative Stock
                 if (data.netBags <= 0 || cleanWeight <= 0.001) return;
 
                 const p = data.party;
                 if(p === "IGNORE") return;
 
-                // Create a unique key combining Party and Commodity
-                // Example: "ITC_Wheat" vs "ITC_Maize"
                 const uniqueKey = `${p}_${data.commodity}`;
 
                 if (!groups[uniqueKey]) {
@@ -223,7 +236,7 @@
 
             // Step C: Build Text
             let reportText = "";
-            const sortedKeys = Object.keys(groups).sort(); // Sorts alphabetically (ITC_Maize, ITC_Wheat, etc.)
+            const sortedKeys = Object.keys(groups).sort(); 
 
             if (sortedKeys.length === 0) {
                 return "All stocks are NIL or 501.";
@@ -265,10 +278,12 @@
 
         // --- DATA FETCHING ---
         function loadData() {
+            // Check again inside logic (Double safety)
+            if (!auth.currentUser) return;
+
             const today = new Date().toDateString();
             const savedDate = localStorage.getItem(DATE_KEY);
 
-            // 12:00 AM Reset
             if (savedDate && savedDate !== today) {
                 localStorage.removeItem(STORAGE_KEY);
                 localStorage.removeItem(DATE_KEY);
@@ -282,6 +297,7 @@
                 const txnRef = ref(db, 'transactions');
                 loadingOverlay.classList.remove('hidden');
 
+                // onValue sirf tab chalega jab auth successfully ho chuka hoga
                 onValue(txnRef, (snapshot) => {
                     loadingOverlay.classList.add('hidden');
                     const data = snapshot.val();
@@ -303,7 +319,12 @@
                     }
                 }, (error) => {
                     loadingOverlay.classList.add('hidden');
-                    showError("Firebase Error: Permission Denied");
+                    // Permission Denied Error ko handle karein
+                    if (error.code === 'PERMISSION_DENIED') {
+                        showError("Access Denied: Please check Firebase Rules or Login.");
+                    } else {
+                        showError("Firebase Error: " + error.message);
+                    }
                 });
             }
         }
@@ -354,8 +375,10 @@
             window.open(url, '_blank');
         });
 
-        loadData();
+        // Note: loadData() ko yahan se hata diya gaya hai, 
+        // ab ye onAuthStateChanged ke andar se call hoga.
 
     </script>
+
 </body>
 </html>
