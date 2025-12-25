@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Daily Stock Report</title>
+    <title>Daily Stock Report Pro</title>
     
     <link rel="icon" type="image/png" href="https://i.ibb.co/ynyfk7Dr/20250827-104636.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
     <style>
@@ -26,71 +26,88 @@
             outline: none;
         }
         .loader {
-            border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #4f46e5;
+            border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #2563eb;
             width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="antialiased text-gray-800">
+<body class="antialiased text-gray-800 h-screen flex flex-col">
 
-    <div class="container mx-auto max-w-3xl p-4 sm:p-6">
+    <!-- Login Screen -->
+    <div id="login-screen" class="fixed inset-0 z-50 flex justify-center items-center bg-gray-100">
+        <div class="w-full max-w-sm p-8 bg-white rounded-2xl shadow-xl text-center">
+            <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="ph-fill ph-lock-key text-3xl text-blue-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">DTR Admin</h2>
+            <input id="password" type="password" inputmode="numeric" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none mb-4 text-center text-lg" placeholder="Enter Password">
+            <p id="login-error" class="text-red-500 text-sm mb-4 hidden">Incorrect Password</p>
+            <button id="login-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">Login</button>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="container mx-auto max-w-3xl p-4 sm:p-6 hidden flex-grow">
         
         <!-- Header -->
-        <header class="text-center mb-4">
-            <h1 class="text-2xl font-bold text-gray-900 flex items-center justify-center gap-2">
-                Daily DTR Report
-            </h1>
-            <p id="date-display" class="text-sm text-gray-500 font-medium mt-1">Loading...</p>
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-extrabold text-gray-900 flex items-center gap-2">
+                    Daily DTR Report
+                </h1>
+                <p id="date-display" class="text-sm text-gray-500 font-bold mt-1">Loading...</p>
+            </div>
+            <button id="logout-btn" class="p-2 bg-white rounded-full shadow-sm text-gray-600 hover:text-red-600 transition" title="Logout">
+                <i class="ph-bold ph-sign-out text-xl"></i>
+            </button>
         </header>
 
-        <!-- Error Box -->
-        <div id="error-box" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-sm font-bold text-center">
-            <span id="error-msg">Something went wrong.</span>
-        </div>
-
         <!-- Controls Row -->
-        <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-wrap justify-between items-center gap-2">
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 mb-4 flex flex-wrap justify-between items-center gap-2">
             
-            <!-- Left Side: Edit & Reset -->
+            <!-- Left Side: Edit & Refresh -->
             <div class="flex gap-2">
-                <button id="editBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded text-xs flex items-center gap-1 shadow-sm transition">
-                    <i class="ph-bold ph-pencil-simple"></i> Edit
+                <button id="editBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-2 shadow-sm transition">
+                    <i class="ph-bold ph-pencil-simple"></i> Edit Text
                 </button>
 
-                <button id="resetBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1.5 px-3 rounded text-xs flex items-center gap-1 shadow-sm transition">
-                    <i class="ph-bold ph-arrow-counter-clockwise"></i> Reset
+                <button id="refreshBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-2 shadow-sm transition">
+                    <i class="ph-bold ph-arrows-clockwise"></i> Refresh Data
                 </button>
             </div>
 
             <!-- Right Side: WhatsApp -->
-            <button id="whatsappShareBtn" class="bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-1.5 px-3 rounded text-xs flex items-center gap-1 shadow-sm transition">
-                <i class="ph-fill ph-whatsapp-logo text-base"></i>
-                Share
+            <button id="whatsappShareBtn" class="bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-2 shadow-lg shadow-green-500/30 transition">
+                <i class="ph-fill ph-whatsapp-logo text-lg"></i>
+                Share on WhatsApp
             </button>
         </div>
 
-        <div class="text-center mb-2">
-             <span id="statusMsg" class="text-[10px] font-bold text-green-600"></span>
+        <div class="text-center mb-2 h-4">
+             <span id="statusMsg" class="text-[10px] font-bold text-green-600 fade-in"></span>
         </div>
 
         <!-- Main Report Area -->
-        <main class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden relative min-h-[300px]">
+        <main class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden relative min-h-[400px]">
             
             <!-- Loading Overlay -->
             <div id="loading-overlay" class="absolute inset-0 bg-white z-10 flex flex-col items-center justify-center">
                 <div class="loader mb-2"></div>
-                <p class="text-xs text-gray-500 font-bold">Fetching Live Data...</p>
+                <p class="text-xs text-blue-600 font-bold">Generating Report...</p>
             </div>
 
             <!-- Content -->
-            <div class="p-6 md:p-8">
-                <pre id="reportContent" class="text-sm text-gray-800" contenteditable="false"></pre>
+            <div class="p-6 md:p-8 bg-gray-50 min-h-full">
+                <pre id="reportContent" class="text-sm text-gray-800 font-mono whitespace-pre-wrap" contenteditable="false"></pre>
             </div>
         </main>
 
-        <div class="text-center mt-4 text-xs text-gray-400">
-            Auto-updates from database • Resets daily at 12:00 AM
+        <div class="text-center mt-6 text-xs text-gray-400 font-medium">
+            Generated by Stock Manager Pro • Excludes Stack 18
         </div>
     </div>
 
@@ -98,7 +115,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAgzs3GqaafEHQSnEyZqrjQT0r_6jXMaGQ",
@@ -113,147 +130,161 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
+        const userEmail = "jackprince79036@gmail.com";
 
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
         const reportEl = document.getElementById('reportContent');
         const loadingOverlay = document.getElementById('loading-overlay');
         const dateDisplay = document.getElementById('date-display');
         const statusMsg = document.getElementById('statusMsg');
-        const errorBox = document.getElementById('error-box');
-        const errorMsg = document.getElementById('error-msg');
-        const STORAGE_KEY = 'savedDTRContent';
-        const DATE_KEY = 'savedDTRDate';
+        
+        // --- AUTH & LOGIN LOGIC ---
+        
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                loginScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                loadData();
+            } else {
+                loginScreen.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+            }
+        });
 
-        // Login
-        signInWithEmailAndPassword(auth, "jackprince79036@gmail.com", "123456")
-            .catch((error) => {
-                showError(`Login Failed: ${error.message}`);
-                loadingOverlay.classList.add('hidden');
+        document.getElementById('login-button').addEventListener('click', () => {
+            const pass = document.getElementById('password').value;
+            signInWithEmailAndPassword(auth, userEmail, pass).catch(() => {
+                document.getElementById('login-error').classList.remove('hidden');
             });
+        });
 
-        function showError(msg) {
-            errorBox.classList.remove('hidden');
-            errorMsg.innerText = msg;
-        }
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
-        // --- PARTY NAME LOGIC ---
+
+        // --- PARTY IDENTIFICATION LOGIC (From Stock Report Pro) ---
         function getPartyName(stackNum) {
             const s = parseInt(stackNum);
-            if (isNaN(s)) return "Unknown";
-            if (s === 501) return "IGNORE"; 
             
-            if (s === 7) return "MONO ENTERPRISE";
-            if (s >= 1 && s <= 18) return "ITC";
-            if ([22, 23, 25, 26, 27].includes(s)) return "TYAGI KRISHI KENDRA";
+            // Explicit Logic from your Stock Report Pro file
+            if (s === 7) return "Mano Enterprises";
+            if (s >= 1 && s <= 18) return "ITC"; // NOTE: Stack 18 will be filtered out later
+            if ([22, 23, 25, 26, 27].includes(s)) return "Tyagi KRISHI KENDRA";
             if ([24, 28, 29, 30, 103, 105, 106].includes(s)) return "ITC";
-            if ([101, 102, 104].includes(s)) return "SHIVSHANKAR TRADING";
+            if ([101, 102, 104].includes(s)) return "SHIVSHANKAR Trading";
             
-            return "GENERAL PARTY";
+            return "General Party";
         }
 
+        // --- REPORT GENERATION LOGIC ---
         function generateReport(transactions) {
             const todayStr = new Date().toLocaleDateString('en-GB');
             dateDisplay.innerText = todayStr;
 
-            if (!transactions) return "No data available.";
+            if (!transactions) return "No data available in database.";
 
-            // Step A: Aggregate by Stack (Calculate Inward vs Outward separately)
-            let stackData = {};
-            
-            transactions.forEach(t => {
-                if(!t) return;
-                const s = parseInt(t.stackNumber);
-                
-                // Rule 1: Directly ignore stack 501
-                if (isNaN(s) || s === 501) return;
-
-                if (!stackData[s]) {
-                    stackData[s] = { 
-                        inBags: 0, outBags: 0,
-                        inWeight: 0, outWeight: 0,
-                        commodity: t.commodity || 'Grain',
-                        party: getPartyName(s)
-                    };
-                }
-
-                const bags = Number(t.bags) || 0;
-                const weight = Number(t.weight) || 0;
-
-                if (t.transactionType === 'inward') {
-                    stackData[s].inBags += bags;
-                    stackData[s].inWeight += weight;
-                } else {
-                    stackData[s].outBags += bags;
-                    stackData[s].outWeight += weight;
-                }
-            });
-
-            // Step B: Group by Party + Commodity with STRICT NIL CHECK
+            // Step 1: Aggregate Data by Party + Commodity
+            // We use a Map where key = "PartyName|Commodity"
             let groups = {};
             let grandTotalBags = 0;
             let grandTotalWeight = 0;
 
-            Object.keys(stackData).forEach(stackNum => {
-                const data = stackData[stackNum];
-                
-                // Calculate Net
-                const netBags = data.inBags - data.outBags;
-                const netWeight = data.inWeight - data.outWeight;
-                const cleanWeight = parseFloat(netWeight.toFixed(3));
-
-                // --- LOGIC UPDATE: STRICT NIL CHECK ---
-                // Agar Outward >= Inward hai (Matlab maal khatam ya jyada chala gaya), toh SKIP.
-                // Agar Net Bags 0 ya negative hai, toh SKIP.
-                if (data.outBags >= data.inBags || netBags <= 0 || cleanWeight <= 0.001) {
-                    return; // Skip this stack completely
+            // Helper to init group
+            const initGroup = (key, party, comm) => {
+                if (!groups[key]) {
+                    groups[key] = {
+                        party: party,
+                        commodity: comm,
+                        netBags: 0,
+                        netWeight: 0
+                    };
                 }
+            };
 
-                const p = data.party;
-                if(p === "IGNORE") return;
+            // First pass: Calculate Net Stock for each stack to check if it's nil
+            let stackTotals = {};
 
-                // Group Key: Party + Commodity
-                const uniqueKey = `${p}_${data.commodity}`;
+            transactions.forEach(t => {
+                const s = parseInt(t.stackNumber);
+                if (isNaN(s)) return;
+                
+                // --- EXCLUSION RULES ---
+                if (s === 501) return; // Legacy ignore
+                if (s === 18) return;  // NEW REQUIREMENT: Ignore Stack 18
+                // -----------------------
 
-                if (!groups[uniqueKey]) {
-                    groups[uniqueKey] = { 
-                        partyName: p,
-                        commodity: data.commodity,
-                        bags: 0, 
-                        weight: 0 
+                if (!stackTotals[s]) {
+                    stackTotals[s] = { 
+                        inB: 0, inW: 0, outB: 0, outW: 0, 
+                        party: getPartyName(s), 
+                        comm: t.commodity || 'Grain' 
                     };
                 }
 
-                groups[uniqueKey].bags += netBags;
-                groups[uniqueKey].weight += cleanWeight;
+                const w = parseFloat(t.weight) || 0;
+                const b = parseInt(t.bags) || 0;
 
-                grandTotalBags += netBags;
-                grandTotalWeight += cleanWeight;
+                if (t.transactionType === 'inward') {
+                    stackTotals[s].inB += b;
+                    stackTotals[s].inW += w;
+                } else {
+                    stackTotals[s].outB += b;
+                    stackTotals[s].outW += w;
+                }
             });
 
-            // Step C: Build Text
+            // Second pass: Group valid stacks
+            Object.keys(stackTotals).forEach(s => {
+                const data = stackTotals[s];
+                
+                // Calc Net
+                const netB = data.inB - data.outB;
+                const netW = data.inW - data.outW;
+
+                // STRICT NIL CHECK: If stack is finished (or negative error), skip it
+                if (netB <= 0 || netW <= 0.001) return;
+
+                // Group Key: Party + Commodity (This automatically separates ITC Wheat vs ITC Maize)
+                const groupKey = `${data.party}|${data.comm}`;
+                
+                initGroup(groupKey, data.party, data.comm);
+                
+                groups[groupKey].netBags += netB;
+                groups[groupKey].netWeight += netW;
+                
+                grandTotalBags += netB;
+                grandTotalWeight += netW;
+            });
+
+            // Step 2: Build Text Output
             let reportText = "";
-            const sortedKeys = Object.keys(groups).sort();
+            const sortedKeys = Object.keys(groups).sort(); // Sorts alphabetically
 
             if (sortedKeys.length === 0) {
-                return "All stacks are Nil (Finished). No stock pending.";
+                return "All stacks are currently empty (Nil).";
             }
 
             sortedKeys.forEach(key => {
                 const d = groups[key];
+                const currentWeight = d.netWeight.toFixed(3);
+                
+                // Format: Opening and Closing are SAME. Inward/Outward are ZERO.
                 reportText += `📦 *STOCK SUMMARY:*
 📅 Date: *${todayStr}*
 📝 Subject: Daily Inward/Outward Report
 🏢 *RUDRANSH WAREHOUSE BEGUSARAI*
-🤝 Client: *${d.partyName}*
-🌾 Commodity: *${d.commodity}*
-📦 OPENING Bags :- *${d.bags}*
-⚖️ OPENING MT   :- *${d.weight.toFixed(3)}*
+🤝 Client: *${d.party.toUpperCase()}*
+🌾 Commodity: *${d.commodity.toUpperCase()}*
+📦 OPENING Bags :- *${d.netBags}*
+⚖️ OPENING MT   :- *${currentWeight}*
 📥 INWARD Bags :-  *0*
 ⚖️ INWARD MT    :-  *0*
 📤 OUTWARD Bag:- *0*
 ⚖️ OUTWARD MT :- *0*
 🧵 MADE-UP Bag  :- *0*
-📦 CLOSING Bag  :- *${d.bags}*
-⚖️ CLOSING MT :-  *${d.weight.toFixed(3)}*
+📦 CLOSING Bag  :- *${d.netBags}*
+⚖️ CLOSING MT :-  *${currentWeight}*
 💰 Funded Stock Details:
 📦 Bags: 0
 ⚖️ Quantity: 0
@@ -271,99 +302,66 @@
             return reportText;
         }
 
-        // --- DATA LOADING & STORAGE ---
+        // --- DATA FETCHING ---
         function loadData() {
-            const today = new Date().toDateString();
-            const savedDate = localStorage.getItem(DATE_KEY);
-
-            // 12:00 AM Reset Logic
-            if (savedDate && savedDate !== today) {
-                localStorage.removeItem(STORAGE_KEY);
-                localStorage.removeItem(DATE_KEY);
-            }
-
-            if (localStorage.getItem(STORAGE_KEY)) {
-                reportEl.innerText = localStorage.getItem(STORAGE_KEY);
-                dateDisplay.innerText = new Date().toLocaleDateString('en-GB');
+            loadingOverlay.classList.remove('hidden');
+            const txnRef = ref(db, 'transactions');
+            
+            onValue(txnRef, (snapshot) => {
                 loadingOverlay.classList.add('hidden');
-            } else {
-                const txnRef = ref(db, 'transactions');
-                loadingOverlay.classList.remove('hidden');
-
-                onValue(txnRef, (snapshot) => {
-                    loadingOverlay.classList.add('hidden');
-                    const data = snapshot.val();
-                    if (data) {
-                        try {
-                            const transactions = Object.values(data);
-                            const freshText = generateReport(transactions);
-                            
-                            if (!localStorage.getItem(STORAGE_KEY)) {
-                                reportEl.innerText = freshText;
-                            }
-                            window.originalReportText = freshText;
-                            errorBox.classList.add('hidden');
-                        } catch (err) {
-                            showError("Processing Error: " + err.message);
-                        }
-                    } else {
-                        reportEl.innerText = "Database Empty.";
-                    }
-                }, (error) => {
-                    loadingOverlay.classList.add('hidden');
-                    showError("Firebase Error: " + error.message);
-                });
-            }
+                const data = snapshot.val();
+                if (data) {
+                    const transactions = Object.values(data);
+                    const freshText = generateReport(transactions);
+                    reportEl.innerText = freshText;
+                    statusMsg.innerText = "Live Data Synced";
+                    setTimeout(() => statusMsg.innerText = "", 2000);
+                } else {
+                    reportEl.innerText = "Database Empty.";
+                }
+            }, (error) => {
+                loadingOverlay.classList.add('hidden');
+                reportEl.innerText = "Error fetching data: " + error.message;
+            });
         }
 
-        // --- BUTTONS ---
+        // --- BUTTON ACTIONS ---
+
+        // Edit Button
         const editBtn = document.getElementById('editBtn');
         editBtn.addEventListener('click', () => {
             const isEditable = reportEl.getAttribute('contenteditable') === 'true';
             if (isEditable) {
+                // Save Mode
                 reportEl.setAttribute('contenteditable', 'false');
                 reportEl.classList.remove('editable');
-                editBtn.innerHTML = '<i class="ph-bold ph-pencil-simple"></i> Edit';
+                editBtn.innerHTML = '<i class="ph-bold ph-pencil-simple"></i> Edit Text';
                 editBtn.classList.replace('bg-green-600', 'bg-indigo-600');
-                statusMsg.innerText = "Saved Locally";
+                statusMsg.innerText = "Manual Edits Active (Will reset on refresh)";
             } else {
+                // Edit Mode
                 reportEl.setAttribute('contenteditable', 'true');
                 reportEl.classList.add('editable');
                 reportEl.focus();
-                editBtn.innerHTML = '<i class="ph-bold ph-check"></i> Save';
+                editBtn.innerHTML = '<i class="ph-bold ph-check"></i> Save Changes';
                 editBtn.classList.replace('bg-indigo-600', 'bg-green-600');
-                statusMsg.innerText = "Editing...";
             }
         });
 
-        let timeout;
-        reportEl.addEventListener('input', () => {
-            clearTimeout(timeout);
-            statusMsg.innerText = "Typing...";
-            timeout = setTimeout(() => {
-                localStorage.setItem(STORAGE_KEY, reportEl.innerText);
-                localStorage.setItem(DATE_KEY, new Date().toDateString());
-                statusMsg.innerText = "Saved";
-            }, 800);
-        });
-
-        document.getElementById('resetBtn').addEventListener('click', () => {
-            if(confirm("Reset to actual live data? (Manual edits will be lost)")) {
-                localStorage.removeItem(STORAGE_KEY);
-                localStorage.removeItem(DATE_KEY);
-                window.location.reload();
+        // Refresh Button
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            if(confirm("Refresh from Database? Any manual edits will be lost.")) {
+                loadData();
             }
         });
 
+        // WhatsApp Share
         document.getElementById('whatsappShareBtn').addEventListener('click', () => {
             const text = reportEl.innerText;
             if(!text) return;
             const url = `whatsapp://send?text=${encodeURIComponent(text)}`;
             window.open(url, '_blank');
         });
-
-        // Initialize
-        loadData();
 
     </script>
 </body>
