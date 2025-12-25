@@ -29,6 +29,9 @@
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+        
+        /* Disabled state styling */
+        .disabled-overlay { opacity: 0.6; pointer-events: none; }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -58,8 +61,11 @@
     <!-- Main Dashboard Container (Initially Hidden) -->
     <div id="dashboard-container" class="hidden">
         <div class="container mx-auto max-w-screen-2xl py-8 px-1 sm:px-6 lg:px-8">
-            <header class="text-center mb-10 relative">
+            <header class="text-center mb-6 relative">
                 <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">RUDRANSH STOCK</h1>
+                <!-- Access Status Indicator -->
+                <div id="access-status" class="mt-2 text-sm font-semibold text-gray-500">Checking permissions...</div>
+                
                 <button id="logout-btn" class="absolute top-0 right-0 mt-2 mr-2 sm:mr-6 lg:mr-8 flex items-center gap-2 px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors">
                     <i data-lucide="log-out" class="w-5 h-5"></i>
                     <span>Logout</span>
@@ -68,7 +74,13 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
                 <!-- Left Side: Data Entry Form -->
                 <div class="w-full">
-                    <div class="bg-white rounded-xl p-6 md:p-8 lg:p-10 custom-card h-full">
+                    <div id="entry-card" class="bg-white rounded-xl p-6 md:p-8 lg:p-10 custom-card h-full relative">
+                        <!-- Lock overlay for non-admins -->
+                        <div id="lock-overlay" class="hidden absolute inset-0 bg-gray-100 bg-opacity-50 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm">
+                            <i data-lucide="lock" class="w-12 h-12 text-gray-400 mb-2"></i>
+                            <span class="text-gray-600 font-bold bg-white px-4 py-2 rounded-full shadow">Read Only Mode</span>
+                        </div>
+
                         <div class="mb-4 text-center">
                             <label class="block text-base font-medium text-gray-700 mb-3">Select Commodity</label>
                             <div class="flex justify-center space-x-4">
@@ -174,12 +186,16 @@
         const database = getDatabase(app);
         const auth = getAuth(app);
 
+        // --- ADMIN UID FROM YOUR RULES ---
+        const ADMIN_UID = "BDu82F0W96RiiWIECXezjR4NqyO2";
+
         // --- GLOBAL STATE ---
         let transactionsRef = null;
         let selectedCommodity = 'Wheat';
         let allTransactions = {};
         let currentModalTransactionPool = [];
         let transactionIdToDelete = null;
+        let isUserAdmin = false;
 
         // --- DOM Elements ---
         const loginContainer = document.getElementById('login-container');
@@ -195,16 +211,33 @@
         const tableModal = document.getElementById('table-modal');
         const editModal = document.getElementById('edit-modal');
         const deleteModal = document.getElementById('delete-modal');
+        const accessStatus = document.getElementById('access-status');
+        const lockOverlay = document.getElementById('lock-overlay');
 
         // --- AUTHENTICATION ---
         onAuthStateChanged(auth, user => {
             if (user) {
                 // User is signed in.
+                console.log("Logged in user UID:", user.uid);
+                
                 loginContainer.classList.add('hidden');
                 dashboardContainer.classList.remove('hidden');
                 
+                // Check Admin Access based on Rules
+                if (user.uid === ADMIN_UID) {
+                    isUserAdmin = true;
+                    accessStatus.innerHTML = '<span class="text-green-600 flex items-center justify-center gap-1"><i data-lucide="check-circle" class="w-4 h-4"></i> Admin Access Granted</span>';
+                    lockOverlay.classList.add('hidden');
+                } else {
+                    isUserAdmin = false;
+                    accessStatus.innerHTML = '<span class="text-orange-600 flex items-center justify-center gap-1"><i data-lucide="lock" class="w-4 h-4"></i> Read Only Access (UID Mismatch)</span>';
+                    lockOverlay.classList.remove('hidden');
+                    console.warn("UID Mismatch! Expected:", ADMIN_UID, "Got:", user.uid);
+                }
+
                 // Initialize app logic now that user is authenticated
                 initializeAppLogic();
+                lucide.createIcons(); // Refresh icons for status
             } else {
                 // User is signed out.
                 dashboardContainer.classList.add('hidden');
@@ -224,7 +257,7 @@
             signInWithEmailAndPassword(auth, email, password)
                 .catch((error) => {
                     console.error("Login failed:", error);
-                    showToast("Incorrect password. Please try again.", false);
+                    showToast("Incorrect password or Network Error.", false);
                     loginLoader.classList.add('hidden');
                 });
         });
@@ -250,6 +283,8 @@
                 updateSummary();
                 loader.style.display = 'none';
                 summarySection.classList.remove('hidden');
+            }, (error) => {
+                showToast("Read Error: " + error.message, false);
             });
         }
 
@@ -325,10 +360,7 @@
                 <div id="net-card" class="bg-white rounded-xl p-5 custom-card clickable-card"><h3 class="font-semibold text-gray-500">Net Stock</h3><p id="netBags" class="text-3xl font-bold text-blue-600 mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="netWeight" class="text-2xl font-bold text-blue-600 mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>
                 <div class="bg-gray-800 text-white rounded-xl p-5 custom-card"><h3 class="font-semibold text-gray-400">Grand Total</h3><p id="grandTotalBags" class="text-3xl font-bold mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="grandTotalWeight" class="text-2xl font-bold mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>`;
             
-            // Check if lucide exists before trying to create icons to prevent crash
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
         
         function loadSavedData() {
@@ -351,7 +383,6 @@
         }
 
         function setupEventListeners() {
-            // Use querySelector for elements that are dynamically added
             document.querySelector('#data-form').addEventListener('submit', handleDataFormSubmit);
             document.querySelector('#edit-form').addEventListener('submit', handleEditFormSubmit);
 
@@ -397,7 +428,6 @@
                 localStorage.removeItem('savedDate');
                 localStorage.removeItem('savedTransactionType');
                 
-                // Clear inputs visually as well
                 document.getElementById('stackNumber').value = '';
                 document.getElementById('date').valueAsDate = new Date();
                 document.getElementById('transactionType').value = 'inward';
@@ -435,9 +465,13 @@
         // --- CORE LOGIC ---
         function handleDataFormSubmit(e) {
             e.preventDefault();
-            const form = e.target;
             
-            // Safe element access
+            if (!isUserAdmin) {
+                showToast("Only Admin can submit data. Read Only Mode.", false);
+                return;
+            }
+
+            const form = e.target;
             const bagsInput = document.getElementById('bags');
             const weightInput = document.getElementById('weight');
             const stackInput = document.getElementById('stackNumber');
@@ -464,23 +498,24 @@
             push(transactionsRef, transaction).then(() => {
                 showToast('Data submitted successfully!');
                 
-                // Clear fields safely
                 bagsInput.value = '';
                 weightInput.value = '';
                 
-                // Reset van input unless checked
                 if(!madeupCheck.checked) {
                     vanInput.value = '';
                     vanInput.disabled = false;
                 } else {
-                    // if it was made-up, uncheck and clear
                     madeupCheck.checked = false;
                     vanInput.value = '';
                     vanInput.disabled = false;
                 }
             }).catch(error => {
                 console.error("Firebase Error:", error);
-                showToast("Submission failed: " + error.message, false);
+                if(error.message.includes("permission_denied")) {
+                    showToast("Access Denied: You are not authorized to write.", false);
+                } else {
+                    showToast("Submission failed: " + error.message, false);
+                }
             });
         }
         
@@ -591,13 +626,16 @@
                     const typeClass = tx.transactionType === 'inward' ? 'text-green-600' : 'text-red-600';
                     const typeText = tx.transactionType === 'inward' ? 'In' : 'Out';
                     
+                    const disabledClass = isUserAdmin ? '' : 'disabled-overlay';
+                    const disabledAttr = isUserAdmin ? '' : 'disabled';
+
                     tableBody.insertRow().innerHTML = `
                         <td class="p-3">${tx.date}</td><td class="p-3">${tx.stackNumber}</td>
                         <td class="p-3">${tx.countVan}</td><td class="p-3">${bags.toLocaleString()}</td>
                         <td class="p-3">${weight.toFixed(3)}</td><td class="p-3 font-semibold ${typeClass}">${typeText}</td>
                         <td class="p-3 flex space-x-3">
-                            <button data-id="${tx.id}" class="edit-btn action-btn text-blue-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"></path></svg></button>
-                            <button data-id="${tx.id}" class="delete-btn action-btn text-red-500"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                            <button data-id="${tx.id}" class="edit-btn action-btn text-blue-500 ${disabledClass}" ${disabledAttr}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"></path></svg></button>
+                            <button data-id="${tx.id}" class="delete-btn action-btn text-red-500 ${disabledClass}" ${disabledAttr}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                         </td>`;
                 });
                 tableBody.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openEditModal(e.currentTarget.dataset.id)));
@@ -606,6 +644,7 @@
         }
         
         function openEditModal(id) {
+            if (!isUserAdmin) return;
             const tx = allTransactions[id];
             document.getElementById('edit-transaction-id').value = id;
             document.getElementById('edit-date').value = tx.date;
@@ -630,6 +669,8 @@
 
         function handleEditFormSubmit(e) {
             e.preventDefault();
+            if (!isUserAdmin) return;
+
             const id = document.getElementById('edit-transaction-id').value;
             const updatedTx = { ...allTransactions[id],
                 date: document.getElementById('edit-date').value,
@@ -645,22 +686,27 @@
                 showToast('Transaction updated successfully!');
                 editModal.classList.add('hidden'); 
                 tableModal.classList.add('hidden');
-            }).catch(err => showToast('Update failed.', false));
+            }).catch(err => {
+                showToast(err.message.includes("permission_denied") ? "Access Denied" : "Update failed", false);
+            });
         }
 
         function openDeleteModal(id) {
+            if (!isUserAdmin) return;
             transactionIdToDelete = id;
             deleteModal.classList.remove('hidden');
         }
         
         function handleDeleteConfirmation() {
-            if (!transactionIdToDelete || !transactionsRef) return;
+            if (!transactionIdToDelete || !transactionsRef || !isUserAdmin) return;
             remove(ref(database, 'transactions/' + transactionIdToDelete)).then(() => {
                 showToast('Transaction deleted!');
                 deleteModal.classList.add('hidden');
                 tableModal.classList.add('hidden');
                 transactionIdToDelete = null;
-            }).catch(err => showToast('Deletion failed.', false));
+            }).catch(err => {
+                showToast(err.message.includes("permission_denied") ? "Access Denied" : "Deletion failed", false);
+            });
         }
         
         function showToast(message, isSuccess = true) {
