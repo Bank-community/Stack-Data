@@ -3,176 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RUDRANSH STOCK Dashboard</title>
-    <!-- Tailwind CSS -->
+    <title>Daily Stock Report Pro</title>
+    
+    <link rel="icon" type="image/png" href="https://i.ibb.co/ynyfk7Dr/20250827-104636.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-        .custom-card { box-shadow: 0 8px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; }
-        .clickable-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08); cursor: pointer; }
-        .submit-btn { background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: all 0.3s ease; }
-        .submit-btn:hover { box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
-        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #3b82f6; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+            font-family: inherit;
+        }
+        pre.editable {
+            background-color: #fffbeb;
+            border: 2px dashed #f59e0b;
+            padding: 10px;
+            border-radius: 8px;
+            outline: none;
+        }
+        .loader {
+            border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid #2563eb;
+            width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .commodity-btn { padding: 10px 24px; border: 1px solid #d1d5db; color: #4b5563; background-color: #ffffff; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease-in-out; }
-        .commodity-btn.active { border-color: #3b82f6; background-color: #3b82f6; color: #ffffff; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); }
-        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 40; display: flex; align-items: center; justify-content: center; }
-        .modal-content { background-color: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); max-height: 90vh; display: flex; flex-direction: column; }
-        .action-btn { transition: all 0.2s ease; }
-        .action-btn:hover { transform: scale(1.1); }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
         
-        /* Disabled state styling */
-        .disabled-overlay { opacity: 0.6; pointer-events: none; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="antialiased text-gray-800">
+<body class="antialiased text-gray-800 h-screen flex flex-col">
 
-    <!-- Login Section -->
-    <div id="login-container" class="min-h-screen flex items-center justify-center bg-gray-50">
-        <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-md space-y-6">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-gray-800">RUDRANSH STOCK</h2>
-                <p class="mt-2 text-sm text-gray-600">Admin Login</p>
+    <!-- Login Screen -->
+    <div id="login-screen" class="fixed inset-0 z-50 flex justify-center items-center bg-gray-100">
+        <div class="w-full max-w-sm p-8 bg-white rounded-2xl shadow-xl text-center">
+            <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="ph-fill ph-lock-key text-3xl text-blue-600"></i>
             </div>
-            <form id="login-form" class="space-y-6">
-                <div>
-                    <label for="password" class="sr-only">Password</label>
-                    <input id="password" name="password" type="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Password">
-                </div>
-                <div>
-                    <button type="submit" class="w-full text-white font-bold py-3 px-4 rounded-lg submit-btn">
-                        Sign In
-                    </button>
-                </div>
-            </form>
-            <div id="login-loader" class="hidden justify-center items-center pt-4"><div class="loader"></div></div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">DTR Admin</h2>
+            <input id="password" type="password" inputmode="numeric" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none mb-4 text-center text-lg" placeholder="Enter Password">
+            <p id="login-error" class="text-red-500 text-sm mb-4 hidden">Incorrect Password</p>
+            <button id="login-button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">Login</button>
         </div>
     </div>
 
-    <!-- Main Dashboard Container (Initially Hidden) -->
-    <div id="dashboard-container" class="hidden">
-        <div class="container mx-auto max-w-screen-2xl py-8 px-1 sm:px-6 lg:px-8">
-            <header class="text-center mb-6 relative">
-                <h1 class="text-4xl md:text-5xl font-bold text-gray-800 tracking-tight">RUDRANSH STOCK</h1>
-                <!-- Access Status Indicator -->
-                <div id="access-status" class="mt-2 text-sm font-semibold text-gray-500">Checking permissions...</div>
-                
-                <button id="logout-btn" class="absolute top-0 right-0 mt-2 mr-2 sm:mr-6 lg:mr-8 flex items-center gap-2 px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors">
-                    <i data-lucide="log-out" class="w-5 h-5"></i>
-                    <span>Logout</span>
+    <!-- Main App Container -->
+    <div id="app-container" class="container mx-auto max-w-3xl p-4 sm:p-6 hidden flex-grow">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-extrabold text-gray-900 flex items-center gap-2">
+                    Daily DTR Report
+                </h1>
+                <p id="date-display" class="text-sm text-gray-500 font-bold mt-1">Loading...</p>
+            </div>
+            <button id="logout-btn" class="p-2 bg-white rounded-full shadow-sm text-gray-600 hover:text-red-600 transition" title="Logout">
+                <i class="ph-bold ph-sign-out text-xl"></i>
+            </button>
+        </header>
+
+        <!-- Controls Row -->
+        <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 mb-4 flex flex-wrap justify-between items-center gap-2">
+            
+            <!-- Left Side: Edit & Refresh -->
+            <div class="flex gap-2">
+                <button id="editBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-2 shadow-sm transition">
+                    <i class="ph-bold ph-pencil-simple"></i> Edit Text
                 </button>
-            </header>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
-                <!-- Left Side: Data Entry Form -->
-                <div class="w-full">
-                    <div id="entry-card" class="bg-white rounded-xl p-6 md:p-8 lg:p-10 custom-card h-full relative">
-                        <!-- Lock overlay for non-admins -->
-                        <div id="lock-overlay" class="hidden absolute inset-0 bg-gray-100 bg-opacity-50 z-10 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm">
-                            <i data-lucide="lock" class="w-12 h-12 text-gray-400 mb-2"></i>
-                            <span class="text-gray-600 font-bold bg-white px-4 py-2 rounded-full shadow">Read Only Mode</span>
-                        </div>
 
-                        <div class="mb-4 text-center">
-                            <label class="block text-base font-medium text-gray-700 mb-3">Select Commodity</label>
-                            <div class="flex justify-center space-x-4">
-                                <button type="button" data-commodity="Wheat" class="commodity-btn active">Wheat</button>
-                                <button type="button" data-commodity="Maize" class="commodity-btn">Maize</button>
-                            </div>
-                        </div>
-                         <div class="mb-5 text-center px-4">
-                            <label class="block text-sm font-medium text-gray-600 mb-2">Transaction Type</label>
-                            <div class="flex items-center justify-center gap-2">
-                                <select id="transactionType" required class="w-full max-w-xs px-4 py-2 border bg-white border-gray-300 rounded-lg">
-                                    <option value="inward">Inward</option>
-                                    <option value="outward">Outward</option>
-                                </select>
-                                <button type="button" id="save-tx-type-btn" title="Save Transaction Type" class="p-2 bg-blue-100 text-blue-700 rounded-lg"><i data-lucide="save" class="w-5 h-5"></i></button>
-                            </div>
-                        </div>
-                        <form id="data-form" class="space-y-4"><!-- Form fields... --></form>
-                    </div>
-                </div>
-                <!-- Right Side: Data Summary -->
-                <div class="w-full">
-                    <div id="loader" class="flex justify-center items-center h-full"><div class="loader"></div></div>
-                    <div id="summary-section" class="hidden space-y-5"><!-- Summary Cards... --></div>
-                </div>
+                <button id="refreshBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-2 shadow-sm transition">
+                    <i class="ph-bold ph-arrows-clockwise"></i> Refresh Data
+                </button>
             </div>
+
+            <!-- Right Side: WhatsApp -->
+            <button id="whatsappShareBtn" class="bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-2 shadow-lg shadow-green-500/30 transition">
+                <i class="ph-fill ph-whatsapp-logo text-lg"></i>
+                Share on WhatsApp
+            </button>
         </div>
-    </div>
-    
-    <!-- Modals -->
-    <div id="table-modal" class="modal-backdrop hidden">
-        <div class="modal-content w-11/12 max-w-4xl">
-            <div class="p-4 border-b flex justify-between items-center">
-                <h2 id="table-modal-title" class="text-xl font-semibold">Transactions</h2>
-                <button id="close-table-modal" class="text-gray-500 hover:text-gray-800 text-3xl leading-none">&times;</button>
+
+        <div class="text-center mb-2 h-4">
+             <span id="statusMsg" class="text-[10px] font-bold text-green-600 fade-in"></span>
+        </div>
+
+        <!-- Main Report Area -->
+        <main class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden relative min-h-[400px]">
+            
+            <!-- Loading Overlay -->
+            <div id="loading-overlay" class="absolute inset-0 bg-white z-10 flex flex-col items-center justify-center">
+                <div class="loader mb-2"></div>
+                <p class="text-xs text-blue-600 font-bold">Generating Report...</p>
             </div>
-            <div class="p-3 bg-gray-50 border-b flex justify-start items-center gap-4 flex-wrap">
-                <div class="flex items-center">
-                    <label for="modal-stack-filter" class="text-sm font-medium text-gray-600 mr-2">Stack:</label>
-                    <select id="modal-stack-filter" class="p-1 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"></select>
-                </div>
-                <div class="flex items-center">
-                    <label for="modal-type-filter" class="text-sm font-medium text-gray-600 mr-2">Show:</label>
-                    <select id="modal-type-filter" class="p-1 border border-gray-300 rounded-md text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="all">Available Stock</option>
-                        <option value="inward">Inward Only</option>
-                        <option value="outward">Outward Only</option>
-                    </select>
-                </div>
-                <div id="modal-summary-display" class="text-sm font-semibold text-gray-700 text-right flex-grow"></div>
+
+            <!-- Content -->
+            <div class="p-6 md:p-8 bg-gray-50 min-h-full">
+                <pre id="reportContent" class="text-sm text-gray-800 font-mono whitespace-pre-wrap" contenteditable="false"></pre>
             </div>
-            <div class="p-4 overflow-y-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="p-3">Date</th><th class="p-3">Stack No.</th><th class="p-3">Van</th>
-                            <th class="p-3">Bags</th><th class="p-3">Weight (MT)</th><th class="p-3">Type</th><th class="p-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="transactions-table-body"></tbody>
-                </table>
-                <div id="no-data-message" class="text-center p-8 text-gray-500 hidden">No transactions found.</div>
-            </div>
+        </main>
+
+        <div class="text-center mt-6 text-xs text-gray-400 font-medium">
+            Generated by Stock Manager Pro • Fixed: Stack 18 Removed (0.800 MT)
         </div>
     </div>
 
-    <div id="edit-modal" class="modal-backdrop hidden">
-        <div class="modal-content w-11/12 max-w-lg p-6">
-            <h2 class="text-xl font-semibold mb-4">Edit Transaction</h2>
-            <form id="edit-form" class="space-y-4">
-                <!-- Edit form fields will be here -->
-            </form>
-        </div>
-    </div>
-    <div id="delete-modal" class="modal-backdrop hidden">
-        <div class="modal-content w-11/12 max-w-sm p-6 text-center">
-            <h2 class="text-lg font-semibold mb-2">Are you sure?</h2>
-            <p class="text-gray-600 mb-6">This will be permanently deleted.</p>
-            <div class="flex justify-center space-x-4">
-                 <button id="cancel-delete" class="px-6 py-2 bg-gray-200 rounded-md">Cancel</button>
-                 <button id="confirm-delete" class="px-6 py-2 bg-red-500 text-white rounded-md">Delete</button>
-            </div>
-        </div>
-    </div>
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-3 px-6 rounded-lg shadow-lg opacity-0 transform translate-y-2 transition-all duration-300"><span id="toast-message"></span></div>
-
-    <!-- Firebase SDKs -->
+    <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        
+
         const firebaseConfig = {
             apiKey: "AIzaSyAgzs3GqaafEHQSnEyZqrjQT0r_6jXMaGQ",
             authDomain: "re-store-7f2b3.firebaseapp.com",
@@ -182,541 +126,255 @@
             messagingSenderId: "774895588253",
             appId: "1:774895588253:web:dad6c0fed92bce7c39574"
         };
+
         const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
+        const db = getDatabase(app);
         const auth = getAuth(app);
+        const userEmail = "jackprince79036@gmail.com";
 
-        // --- ADMIN UID FROM YOUR RULES ---
-        const ADMIN_UID = "BDu82F0W96RiiWIECXezjR4NqyO2";
-
-        // --- GLOBAL STATE ---
-        let transactionsRef = null;
-        let selectedCommodity = 'Wheat';
-        let allTransactions = {};
-        let currentModalTransactionPool = [];
-        let transactionIdToDelete = null;
-        let isUserAdmin = false;
-
-        // --- DOM Elements ---
-        const loginContainer = document.getElementById('login-container');
-        const dashboardContainer = document.getElementById('dashboard-container');
-        const loginForm = document.getElementById('login-form');
-        const loginLoader = document.getElementById('login-loader');
-        const logoutBtn = document.getElementById('logout-btn');
-        const loader = document.getElementById('loader');
-        const summarySection = document.getElementById('summary-section');
-        const modalStackFilter = document.getElementById('modal-stack-filter');
-        const modalTypeFilter = document.getElementById('modal-type-filter');
-        const modalSummaryDisplay = document.getElementById('modal-summary-display');
-        const tableModal = document.getElementById('table-modal');
-        const editModal = document.getElementById('edit-modal');
-        const deleteModal = document.getElementById('delete-modal');
-        const accessStatus = document.getElementById('access-status');
-        const lockOverlay = document.getElementById('lock-overlay');
-
-        // --- AUTHENTICATION ---
+        // DOM Elements
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const reportEl = document.getElementById('reportContent');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const dateDisplay = document.getElementById('date-display');
+        const statusMsg = document.getElementById('statusMsg');
+        
+        // --- AUTH & LOGIN LOGIC ---
+        
         onAuthStateChanged(auth, user => {
             if (user) {
-                // User is signed in.
-                console.log("Logged in user UID:", user.uid);
-                
-                loginContainer.classList.add('hidden');
-                dashboardContainer.classList.remove('hidden');
-                
-                // Check Admin Access based on Rules
-                if (user.uid === ADMIN_UID) {
-                    isUserAdmin = true;
-                    accessStatus.innerHTML = '<span class="text-green-600 flex items-center justify-center gap-1"><i data-lucide="check-circle" class="w-4 h-4"></i> Admin Access Granted</span>';
-                    lockOverlay.classList.add('hidden');
-                } else {
-                    isUserAdmin = false;
-                    accessStatus.innerHTML = '<span class="text-orange-600 flex items-center justify-center gap-1"><i data-lucide="lock" class="w-4 h-4"></i> Read Only Access (UID Mismatch)</span>';
-                    lockOverlay.classList.remove('hidden');
-                    console.warn("UID Mismatch! Expected:", ADMIN_UID, "Got:", user.uid);
-                }
-
-                // Initialize app logic now that user is authenticated
-                initializeAppLogic();
-                lucide.createIcons(); // Refresh icons for status
+                loginScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                loadData();
             } else {
-                // User is signed out.
-                dashboardContainer.classList.add('hidden');
-                loginContainer.classList.remove('hidden');
-                loginForm.reset();
-                loginLoader.classList.add('hidden');
+                loginScreen.classList.remove('hidden');
+                appContainer.classList.add('hidden');
             }
         });
 
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = "princekumar954684@gmail.com";
-            const password = loginForm.password.value;
-
-            loginLoader.classList.remove('hidden');
-
-            signInWithEmailAndPassword(auth, email, password)
-                .catch((error) => {
-                    console.error("Login failed:", error);
-                    showToast("Incorrect password or Network Error.", false);
-                    loginLoader.classList.add('hidden');
-                });
-        });
-
-        logoutBtn.addEventListener('click', () => {
-            signOut(auth).catch(error => {
-                console.error("Logout failed:", error);
-                showToast("Logout failed. Please try again.", false);
+        document.getElementById('login-button').addEventListener('click', () => {
+            const pass = document.getElementById('password').value;
+            signInWithEmailAndPassword(auth, userEmail, pass).catch(() => {
+                document.getElementById('login-error').classList.remove('hidden');
             });
         });
 
-        // --- APP INITIALIZATION (Called after login) ---
-        function initializeAppLogic() {
-            // Setup DB reference. This must be done after auth.
-            transactionsRef = ref(database, 'transactions');
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+
+        // --- PARTY IDENTIFICATION LOGIC ---
+        function getPartyName(stackNum) {
+            const s = parseInt(stackNum);
             
-            setupForms();
-            setupEventListeners();
+            // Logic
+            if (s === 7) return "Mano Enterprises";
+            if (s >= 1 && s <= 18) return "ITC"; 
+            if ([22, 23, 25, 26, 27].includes(s)) return "Tyagi KRISHI KENDRA";
+            if ([24, 28, 29, 30, 103, 105, 106].includes(s)) return "ITC";
+            if ([101, 102, 104].includes(s)) return "SHIVSHANKAR Trading";
             
-            // Firebase Listener for real-time data
-            onValue(transactionsRef, (snapshot) => {
-                allTransactions = snapshot.val() || {};
-                updateSummary();
-                loader.style.display = 'none';
-                summarySection.classList.remove('hidden');
+            return "General Party";
+        }
+
+        // --- REPORT GENERATION LOGIC ---
+        function generateReport(transactions) {
+            const todayStr = new Date().toLocaleDateString('en-GB');
+            dateDisplay.innerText = todayStr;
+
+            if (!transactions) return "No data available in database.";
+
+            let groups = {};
+            let grandTotalBags = 0;
+            let grandTotalWeight = 0;
+
+            const initGroup = (key, party, comm) => {
+                if (!groups[key]) {
+                    groups[key] = {
+                        party: party,
+                        commodity: comm,
+                        netBags: 0,
+                        netWeight: 0
+                    };
+                }
+            };
+
+            // Aggregation map
+            let stackTotals = {};
+
+            transactions.forEach(t => {
+                // Safety check
+                if (!t || !t.stackNumber) return;
+
+                // --- NUCLEAR FILTER FOR STACK 18 ---
+                const rawStack = t.stackNumber;
+                
+                // 1. Direct match (number or string)
+                if (rawStack == 18 || rawStack == "18") return;
+                if (rawStack == 501 || rawStack == "501") return;
+
+                // 2. Integer parsed match (catches "018", "18.0", " 18 ")
+                const cleanStackStr = String(rawStack).trim();
+                const stackInt = parseInt(cleanStackStr);
+                
+                if (!isNaN(stackInt)) {
+                    if (stackInt === 18) return;
+                    if (stackInt === 501) return;
+                }
+                // -----------------------------------
+
+                // Use the clean integer for grouping
+                if (isNaN(stackInt)) return;
+
+                if (!stackTotals[stackInt]) {
+                    stackTotals[stackInt] = { 
+                        inB: 0, inW: 0, outB: 0, outW: 0, 
+                        party: getPartyName(stackInt), 
+                        comm: t.commodity || 'Grain' 
+                    };
+                }
+
+                const w = parseFloat(t.weight) || 0;
+                const b = parseInt(t.bags) || 0;
+
+                if (t.transactionType === 'inward') {
+                    stackTotals[stackInt].inB += b;
+                    stackTotals[stackInt].inW += w;
+                } else {
+                    stackTotals[stackInt].outB += b;
+                    stackTotals[stackInt].outW += w;
+                }
+            });
+
+            // Second pass: Group valid stacks
+            Object.keys(stackTotals).forEach(sKey => {
+                const s = parseInt(sKey);
+                const data = stackTotals[s];
+                
+                // Final Check: Just to be absolutely sure
+                if (s === 18 || s === 501) return;
+
+                // Calc Net
+                const netB = data.inB - data.outB;
+                const netW = data.inW - data.outW;
+
+                // CHECK: If Net <= 0, it means stack is empty/finished. Skip it.
+                if (netB <= 0 || netW <= 0.001) return;
+
+                // Group Key: Party + Commodity
+                const groupKey = `${data.party}|${data.comm}`;
+                
+                initGroup(groupKey, data.party, data.comm);
+                
+                groups[groupKey].netBags += netB;
+                groups[groupKey].netWeight += netW;
+                
+                grandTotalBags += netB;
+                grandTotalWeight += netW;
+            });
+
+            // Step 2: Build Text Output
+            let reportText = "";
+            const sortedKeys = Object.keys(groups).sort(); 
+
+            if (sortedKeys.length === 0) {
+                return "All stacks are currently empty (Nil).";
+            }
+
+            sortedKeys.forEach(key => {
+                const d = groups[key];
+                const currentWeight = d.netWeight.toFixed(3);
+                
+                reportText += `📦 *STOCK SUMMARY:*
+📅 Date: *${todayStr}*
+📝 Subject: Daily Inward/Outward Report
+🏢 *RUDRANSH WAREHOUSE BEGUSARAI*
+🤝 Client: *${d.party.toUpperCase()}*
+🌾 Commodity: *${d.commodity.toUpperCase()}*
+📦 OPENING Bags :- *${d.netBags}*
+⚖️ OPENING MT   :- *${currentWeight}*
+📥 INWARD Bags :-  *0*
+⚖️ INWARD MT    :-  *0*
+📤 OUTWARD Bag:- *0*
+⚖️ OUTWARD MT :- *0*
+🧵 MADE-UP Bag  :- *0*
+📦 CLOSING Bag  :- *${d.netBags}*
+⚖️ CLOSING MT :-  *${currentWeight}*
+💰 Funded Stock Details:
+📦 Bags: 0
+⚖️ Quantity: 0
+🏦 Bank: 0
+
+----------------------------------------------------
+
+`;
+            });
+
+            reportText += `📊 *GRAND TOTAL SUMMARY*
+📦 TOTAL Bags  :- *${grandTotalBags}*
+⚖️ TOTAL MT    :- *${grandTotalWeight.toFixed(3)}*`;
+
+            return reportText;
+        }
+
+        // --- DATA FETCHING ---
+        function loadData() {
+            loadingOverlay.classList.remove('hidden');
+            const txnRef = ref(db, 'transactions');
+            
+            onValue(txnRef, (snapshot) => {
+                loadingOverlay.classList.add('hidden');
+                const data = snapshot.val();
+                if (data) {
+                    const transactions = Object.values(data);
+                    const freshText = generateReport(transactions);
+                    reportEl.innerText = freshText;
+                    statusMsg.innerText = "Live Data Synced";
+                    setTimeout(() => statusMsg.innerText = "", 2000);
+                } else {
+                    reportEl.innerText = "Database Empty.";
+                }
             }, (error) => {
-                showToast("Read Error: " + error.message, false);
+                loadingOverlay.classList.add('hidden');
+                reportEl.innerText = "Error fetching data: " + error.message;
             });
         }
 
-        // --- UI & FORMS SETUP ---
-        function setupForms() {
-            document.querySelector('#data-form').innerHTML = `
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="stackNumber" class="block text-sm font-medium text-gray-600 mb-1">Stack Number</label>
-                        <div class="flex items-center gap-2">
-                            <input type="number" id="stackNumber" name="stackNumber" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                            <button type="button" id="save-stack-btn" title="Save Stack Number" class="p-2 bg-blue-100 text-blue-700 rounded-lg"><i data-lucide="save" class="w-5 h-5"></i></button>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="date" class="block text-sm font-medium text-gray-600 mb-1">Date</label>
-                        <div class="flex items-center gap-2">
-                            <input type="date" id="date" name="date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                            <button type="button" id="save-date-btn" title="Save Date" class="p-2 bg-blue-100 text-blue-700 rounded-lg"><i data-lucide="save" class="w-5 h-5"></i></button>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <label for="countVan" class="block text-sm font-medium text-gray-600 mb-1">Count Van</label>
-                    <div class="flex items-center gap-4">
-                        <input type="text" inputmode="numeric" id="countVan" name="countVan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
-                        <div class="flex items-center whitespace-nowrap">
-                            <input type="checkbox" id="madeup-checkbox" name="madeupCheckbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                            <label for="madeup-checkbox" class="ml-2 text-sm text-gray-600">Made-up</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label for="bags" class="block text-sm font-medium text-gray-600 mb-1">Bags</label><input type="number" id="bags" name="bags" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
-                    <div><label for="weight" class="block text-sm font-medium text-gray-600 mb-1">Weight (MT)</label><input type="number" step="0.001" id="weight" name="weight" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
-                </div>
-                <div class="pt-2 space-y-3">
-                    <button type="submit" class="w-full text-white font-bold py-3 px-4 rounded-lg submit-btn">Submit Data</button>
-                    <button type="button" id="reset-saved-btn" class="w-full text-red-600 font-semibold py-2 px-4 rounded-lg bg-red-100 hover:bg-red-200 transition-colors text-sm flex items-center justify-center gap-2">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset Saved Data
-                    </button>
-                </div>`;
+        // --- BUTTON ACTIONS ---
 
-            document.querySelector('#edit-form').innerHTML = `
-                <input type="hidden" id="edit-transaction-id">
-                <div><label for="edit-date" class="block text-sm font-medium text-gray-600 mb-1">Date</label><input type="date" id="edit-date" required class="w-full mt-1 p-2 border rounded-md"></div>
-                <div><label for="edit-stackNumber" class="block text-sm font-medium text-gray-600 mb-1">Stack Number</label><input type="number" id="edit-stackNumber" required class="w-full mt-1 p-2 border rounded-md"></div>
-                <div>
-                    <label for="edit-countVan" class="block text-sm font-medium text-gray-600 mb-1">Count Van</label>
-                     <div class="flex items-center gap-4">
-                        <input type="text" inputmode="numeric" id="edit-countVan" required class="w-full p-2 border rounded-md">
-                        <div class="flex items-center whitespace-nowrap">
-                            <input type="checkbox" id="edit-madeup-checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                            <label for="edit-madeup-checkbox" class="ml-2 text-sm text-gray-600">Made-up</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label for="edit-bags" class="block text-sm font-medium text-gray-600 mb-1">Bags</label><input type="number" id="edit-bags" required class="w-full mt-1 p-2 border rounded-md"></div>
-                    <div><label for="edit-weight" class="block text-sm font-medium text-gray-600 mb-1">Weight (MT)</label><input type="number" step="0.001" id="edit-weight" required class="w-full mt-1 p-2 border rounded-md"></div>
-                </div>
-                <div class="flex justify-end space-x-3 pt-4">
-                    <button type="button" id="cancel-edit" class="px-4 py-2 bg-gray-200 rounded-md">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md">Save Changes</button>
-                </div>`;
-        
-            document.querySelector('#summary-section').innerHTML = `
-                <h3 id="summary-title" class="text-2xl font-bold text-gray-800 text-center mb-2"></h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div id="inward-card" class="bg-white rounded-xl p-5 custom-card clickable-card"><h3 class="font-semibold text-gray-500">Total Inward</h3><p id="totalInwardBags" class="text-3xl font-bold text-gray-800 mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="totalInwardWeight" class="text-2xl font-bold mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>
-                    <div id="outward-card" class="bg-white rounded-xl p-5 custom-card clickable-card"><h3 class="font-semibold text-gray-500">Total Outward</h3><p id="totalOutwardBags" class="text-3xl font-bold text-gray-800 mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="totalOutwardWeight" class="text-2xl font-bold mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>
-                </div>
-                <div id="net-card" class="bg-white rounded-xl p-5 custom-card clickable-card"><h3 class="font-semibold text-gray-500">Net Stock</h3><p id="netBags" class="text-3xl font-bold text-blue-600 mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="netWeight" class="text-2xl font-bold text-blue-600 mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>
-                <div class="bg-gray-800 text-white rounded-xl p-5 custom-card"><h3 class="font-semibold text-gray-400">Grand Total</h3><p id="grandTotalBags" class="text-3xl font-bold mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="grandTotalWeight" class="text-2xl font-bold mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>`;
-            
-            if (typeof lucide !== 'undefined') lucide.createIcons();
-        }
-        
-        function loadSavedData() {
-            const savedStack = localStorage.getItem('savedStackNumber');
-            const savedDate = localStorage.getItem('savedDate');
-            const savedTxType = localStorage.getItem('savedTransactionType');
-            
-            const dateInput = document.getElementById('date');
-            const stackInput = document.getElementById('stackNumber');
-            const txTypeInput = document.getElementById('transactionType');
-
-            if (savedStack && stackInput) stackInput.value = savedStack;
-            
-            if (dateInput) {
-                if (savedDate) dateInput.value = savedDate;
-                else dateInput.valueAsDate = new Date();
-            }
-
-            if (savedTxType && txTypeInput) txTypeInput.value = savedTxType;
-        }
-
-        function setupEventListeners() {
-            document.querySelector('#data-form').addEventListener('submit', handleDataFormSubmit);
-            document.querySelector('#edit-form').addEventListener('submit', handleEditFormSubmit);
-
-            document.querySelectorAll('.commodity-btn').forEach(btn => btn.addEventListener('click', (e) => switchCommodity(e.target.dataset.commodity)));
-            
-            document.querySelector('#inward-card').addEventListener('click', () => showTableModal('inward'));
-            document.querySelector('#outward-card').addEventListener('click', () => showTableModal('outward'));
-            document.querySelector('#net-card').addEventListener('click', () => showTableModal('net'));
-            
-            document.getElementById('close-table-modal').addEventListener('click', () => tableModal.classList.add('hidden'));
-            document.querySelector('#cancel-edit').addEventListener('click', () => editModal.classList.add('hidden'));
-            document.getElementById('cancel-delete').addEventListener('click', () => deleteModal.classList.add('hidden'));
-            document.getElementById('confirm-delete').addEventListener('click', handleDeleteConfirmation);
-            modalStackFilter.addEventListener('change', applyModalFilters);
-            modalTypeFilter.addEventListener('change', applyModalFilters);
-
-            document.querySelector('#save-stack-btn').addEventListener('click', () => {
-                const stackValue = document.getElementById('stackNumber').value;
-                if (stackValue) {
-                    localStorage.setItem('savedStackNumber', stackValue);
-                    showToast('Stack number saved!');
-                } else {
-                    showToast('Enter a stack number to save.', false);
-                }
-            });
-
-            document.querySelector('#save-date-btn').addEventListener('click', () => {
-                const dateValue = document.getElementById('date').value;
-                if (dateValue) {
-                    localStorage.setItem('savedDate', dateValue);
-                    showToast('Date saved!');
-                }
-            });
-
-            document.querySelector('#save-tx-type-btn').addEventListener('click', () => {
-                const txTypeValue = document.getElementById('transactionType').value;
-                localStorage.setItem('savedTransactionType', txTypeValue);
-                showToast('Transaction type saved!');
-            });
-
-            document.querySelector('#reset-saved-btn').addEventListener('click', () => {
-                localStorage.removeItem('savedStackNumber');
-                localStorage.removeItem('savedDate');
-                localStorage.removeItem('savedTransactionType');
-                
-                document.getElementById('stackNumber').value = '';
-                document.getElementById('date').valueAsDate = new Date();
-                document.getElementById('transactionType').value = 'inward';
-                
-                showToast('Saved data has been reset.');
-            });
-
-            const madeupCheckbox = document.querySelector('#madeup-checkbox');
-            const countVanInput = document.querySelector('#countVan');
-            madeupCheckbox.addEventListener('change', () => {
-                if (madeupCheckbox.checked) {
-                    countVanInput.value = 'Made-up';
-                    countVanInput.disabled = true;
-                } else {
-                    countVanInput.value = '';
-                    countVanInput.disabled = false;
-                }
-            });
-            
-            const editMadeupCheckbox = document.querySelector('#edit-madeup-checkbox');
-            const editCountVanInput = document.querySelector('#edit-countVan');
-             editMadeupCheckbox.addEventListener('change', () => {
-                if (editMadeupCheckbox.checked) {
-                    editCountVanInput.value = 'Made-up';
-                    editCountVanInput.disabled = true;
-                } else {
-                    editCountVanInput.value = '';
-                    editCountVanInput.disabled = false;
-                }
-            });
-            
-            loadSavedData();
-        }
-
-        // --- CORE LOGIC ---
-        function handleDataFormSubmit(e) {
-            e.preventDefault();
-            
-            if (!isUserAdmin) {
-                showToast("Only Admin can submit data. Read Only Mode.", false);
-                return;
-            }
-
-            const form = e.target;
-            const bagsInput = document.getElementById('bags');
-            const weightInput = document.getElementById('weight');
-            const stackInput = document.getElementById('stackNumber');
-            const dateInput = document.getElementById('date');
-            const vanInput = document.getElementById('countVan');
-            const madeupCheck = document.getElementById('madeup-checkbox');
-
-            const bags = Number(bagsInput.value);
-            const stackNumber = stackInput.value;
-            const countVan = vanInput.value;
-            const date = dateInput.value;
-
-            if (bags <= 0) { showToast("Bags must be greater than 0.", false); return; }
-            if (!stackNumber || !date || !countVan.trim()) { showToast('Please fill all fields correctly.', false); return; }
-            if (!transactionsRef) { showToast('Database not connected. Please login again.', false); return; }
-
-            const transaction = {
-                stackNumber: stackNumber, date: date, countVan: countVan.trim(),
-                commodity: selectedCommodity, transactionType: document.getElementById('transactionType').value,
-                bags: bags, weight: Number(weightInput.value),
-                timestamp: new Date().toISOString()
-            };
-
-            push(transactionsRef, transaction).then(() => {
-                showToast('Data submitted successfully!');
-                
-                bagsInput.value = '';
-                weightInput.value = '';
-                
-                if(!madeupCheck.checked) {
-                    vanInput.value = '';
-                    vanInput.disabled = false;
-                } else {
-                    madeupCheck.checked = false;
-                    vanInput.value = '';
-                    vanInput.disabled = false;
-                }
-            }).catch(error => {
-                console.error("Firebase Error:", error);
-                if(error.message.includes("permission_denied")) {
-                    showToast("Access Denied: You are not authorized to write.", false);
-                } else {
-                    showToast("Submission failed: " + error.message, false);
-                }
-            });
-        }
-        
-        function switchCommodity(commodity) {
-            selectedCommodity = commodity;
-            document.querySelectorAll('.commodity-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.commodity === commodity));
-            updateSummary();
-        }
-
-        function updateSummary() {
-            document.getElementById('summary-title').textContent = `${selectedCommodity} - Stock Summary`;
-            let [filtInB, filtInW, filtOutB, filtOutW] = [0, 0, 0, 0];
-            let [grandInB, grandInW, grandOutB, grandOutW] = [0, 0, 0, 0];
-
-            for(const tx of Object.values(allTransactions)) {
-                const bags = Number(tx.bags) || 0;
-                const weight = Number(tx.weight) || 0;
-                if (tx.commodity === selectedCommodity) {
-                    tx.transactionType === 'inward' ? (filtInB += bags, filtInW += weight) : (filtOutB += bags, filtOutW += weight);
-                }
-                tx.transactionType === 'inward' ? (grandInB += bags, grandInW += weight) : (grandOutB += bags, grandOutW += weight);
-            }
-
-            updateTextContent('totalInwardBags', filtInB); updateTextContent('totalInwardWeight', filtInW.toFixed(3));
-            updateTextContent('totalOutwardBags', filtOutB); updateTextContent('totalOutwardWeight', filtOutW.toFixed(3));
-            updateTextContent('netBags', filtInB - filtOutB); updateTextContent('netWeight', (filtInW - filtOutW).toFixed(3));
-            updateTextContent('grandTotalBags', grandInB - grandOutB); updateTextContent('grandTotalWeight', (grandInW - grandOutW).toFixed(3));
-        }
-
-        function updateTextContent(elId, value) {
-            const element = document.getElementById(elId);
-            if(element) element.childNodes[0].nodeValue = value.toLocaleString() + ' ';
-        }
-
-        function showTableModal(type) {
-            currentModalTransactionPool = Object.entries(allTransactions)
-                .filter(([, tx]) => tx.commodity === selectedCommodity)
-                .map(([id, tx]) => ({ id, ...tx }));
-            
-            const typeText = type === 'net' ? 'Net Stock' : type.charAt(0).toUpperCase() + type.slice(1);
-            document.getElementById('table-modal-title').textContent = `${selectedCommodity} ${typeText} Transactions`;
-            
-            populateModalStackFilter(currentModalTransactionPool);
-
-            if(type === 'inward') modalTypeFilter.value = 'inward';
-            else if(type === 'outward') modalTypeFilter.value = 'outward';
-            else modalTypeFilter.value = 'all';
-            
-            applyModalFilters();
-            tableModal.classList.remove('hidden');
-        }
-        
-        function populateModalStackFilter(transactions) {
-            const stackNumbers = [...new Set(transactions.map(tx => tx.stackNumber))].sort((a, b) => a - b);
-            modalStackFilter.innerHTML = '<option value="">All</option>';
-            stackNumbers.forEach(stack => modalStackFilter.add(new Option(stack, stack)));
-        }
-        
-        function applyModalFilters() {
-            const selectedStack = modalStackFilter.value;
-            const selectedType = modalTypeFilter.value;
-
-            let transactionsToShow = currentModalTransactionPool;
-            if (selectedStack) {
-                transactionsToShow = transactionsToShow.filter(tx => tx.stackNumber === selectedStack);
-            }
-
-            let summaryTransactions = transactionsToShow;
-            if (selectedType !== 'all') {
-                transactionsToShow = transactionsToShow.filter(tx => tx.transactionType === selectedType);
-                summaryTransactions = transactionsToShow;
-            }
-
-            populateTable(transactionsToShow);
-            updateModalSummary(summaryTransactions);
-        }
-        
-        function updateModalSummary(transactions) {
-            const selectedType = modalTypeFilter.value;
-            let totalBags = 0, totalWeight = 0, summaryLabel = "Total:";
-
-            if (selectedType === 'all') {
-                let inwardBags = 0, inwardWeight = 0, outwardBags = 0, outwardWeight = 0;
-                transactions.forEach(tx => {
-                    const bags = Number(tx.bags) || 0, weight = Number(tx.weight) || 0;
-                    if (tx.transactionType === 'inward') { inwardBags += bags; inwardWeight += weight; } 
-                    else { outwardBags += bags; outwardWeight += weight; }
-                });
-                totalBags = inwardBags - outwardBags;
-                totalWeight = inwardWeight - outwardWeight;
-                summaryLabel = "Available:";
+        const editBtn = document.getElementById('editBtn');
+        editBtn.addEventListener('click', () => {
+            const isEditable = reportEl.getAttribute('contenteditable') === 'true';
+            if (isEditable) {
+                reportEl.setAttribute('contenteditable', 'false');
+                reportEl.classList.remove('editable');
+                editBtn.innerHTML = '<i class="ph-bold ph-pencil-simple"></i> Edit Text';
+                editBtn.classList.replace('bg-green-600', 'bg-indigo-600');
+                statusMsg.innerText = "Manual Edits Active (Will reset on refresh)";
             } else {
-                totalBags = transactions.reduce((sum, tx) => sum + (Number(tx.bags) || 0), 0);
-                totalWeight = transactions.reduce((sum, tx) => sum + (Number(tx.weight) || 0), 0);
-                summaryLabel = selectedType === 'inward' ? "Total Inward:" : "Total Outward:";
+                reportEl.setAttribute('contenteditable', 'true');
+                reportEl.classList.add('editable');
+                reportEl.focus();
+                editBtn.innerHTML = '<i class="ph-bold ph-check"></i> Save Changes';
+                editBtn.classList.replace('bg-indigo-600', 'bg-green-600');
             }
-            modalSummaryDisplay.innerHTML = `${summaryLabel} <span class="font-bold text-blue-600">${totalBags.toLocaleString()}</span> Bags / <span class="font-bold text-blue-600">${totalWeight.toFixed(3)}</span> MT`;
-        }
+        });
 
-        function populateTable(transactions) {
-            const tableBody = document.getElementById('transactions-table-body');
-            tableBody.innerHTML = '';
-            document.getElementById('no-data-message').classList.toggle('hidden', transactions.length > 0);
-
-            if (transactions.length > 0) {
-                transactions.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
-                    const bags = Number(tx.bags) || 0, weight = Number(tx.weight) || 0;
-                    const typeClass = tx.transactionType === 'inward' ? 'text-green-600' : 'text-red-600';
-                    const typeText = tx.transactionType === 'inward' ? 'In' : 'Out';
-                    
-                    const disabledClass = isUserAdmin ? '' : 'disabled-overlay';
-                    const disabledAttr = isUserAdmin ? '' : 'disabled';
-
-                    tableBody.insertRow().innerHTML = `
-                        <td class="p-3">${tx.date}</td><td class="p-3">${tx.stackNumber}</td>
-                        <td class="p-3">${tx.countVan}</td><td class="p-3">${bags.toLocaleString()}</td>
-                        <td class="p-3">${weight.toFixed(3)}</td><td class="p-3 font-semibold ${typeClass}">${typeText}</td>
-                        <td class="p-3 flex space-x-3">
-                            <button data-id="${tx.id}" class="edit-btn action-btn text-blue-500 ${disabledClass}" ${disabledAttr}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"></path></svg></button>
-                            <button data-id="${tx.id}" class="delete-btn action-btn text-red-500 ${disabledClass}" ${disabledAttr}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                        </td>`;
-                });
-                tableBody.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openEditModal(e.currentTarget.dataset.id)));
-                tableBody.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => openDeleteModal(e.currentTarget.dataset.id)));
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            if(confirm("Refresh from Database? Any manual edits will be lost.")) {
+                loadData();
             }
-        }
-        
-        function openEditModal(id) {
-            if (!isUserAdmin) return;
-            const tx = allTransactions[id];
-            document.getElementById('edit-transaction-id').value = id;
-            document.getElementById('edit-date').value = tx.date;
-            document.getElementById('edit-stackNumber').value = tx.stackNumber;
-            document.getElementById('edit-bags').value = tx.bags;
-            document.getElementById('edit-weight').value = tx.weight;
-            
-            const editCountVanInput = document.getElementById('edit-countVan');
-            const editMadeupCheckbox = document.getElementById('edit-madeup-checkbox');
-            if (tx.countVan === 'Made-up') {
-                editMadeupCheckbox.checked = true;
-                editCountVanInput.value = 'Made-up';
-                editCountVanInput.disabled = true;
-            } else {
-                editMadeupCheckbox.checked = false;
-                editCountVanInput.value = tx.countVan;
-                editCountVanInput.disabled = false;
-            }
-            
-            editModal.classList.remove('hidden');
-        }
+        });
 
-        function handleEditFormSubmit(e) {
-            e.preventDefault();
-            if (!isUserAdmin) return;
+        document.getElementById('whatsappShareBtn').addEventListener('click', () => {
+            const text = reportEl.innerText;
+            if(!text) return;
+            const url = `whatsapp://send?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        });
 
-            const id = document.getElementById('edit-transaction-id').value;
-            const updatedTx = { ...allTransactions[id],
-                date: document.getElementById('edit-date').value,
-                stackNumber: document.getElementById('edit-stackNumber').value,
-                countVan: document.getElementById('edit-countVan').value.trim(),
-                bags: Number(document.getElementById('edit-bags').value),
-                weight: Number(document.getElementById('edit-weight').value),
-            };
-            if(updatedTx.bags <= 0) { showToast("Bags must be greater than 0.", false); return; }
-            if(!transactionsRef) { showToast('Database error.', false); return; }
-
-            update(ref(database, 'transactions/' + id), updatedTx).then(() => {
-                showToast('Transaction updated successfully!');
-                editModal.classList.add('hidden'); 
-                tableModal.classList.add('hidden');
-            }).catch(err => {
-                showToast(err.message.includes("permission_denied") ? "Access Denied" : "Update failed", false);
-            });
-        }
-
-        function openDeleteModal(id) {
-            if (!isUserAdmin) return;
-            transactionIdToDelete = id;
-            deleteModal.classList.remove('hidden');
-        }
-        
-        function handleDeleteConfirmation() {
-            if (!transactionIdToDelete || !transactionsRef || !isUserAdmin) return;
-            remove(ref(database, 'transactions/' + transactionIdToDelete)).then(() => {
-                showToast('Transaction deleted!');
-                deleteModal.classList.add('hidden');
-                tableModal.classList.add('hidden');
-                transactionIdToDelete = null;
-            }).catch(err => {
-                showToast(err.message.includes("permission_denied") ? "Access Denied" : "Deletion failed", false);
-            });
-        }
-        
-        function showToast(message, isSuccess = true) {
-            const toast = document.getElementById('toast');
-            toast.querySelector('#toast-message').textContent = message;
-            toast.className = toast.className.replace(/bg-gray-900|bg-red-600/, isSuccess ? 'bg-gray-900' : 'bg-red-600');
-            toast.classList.remove('opacity-0', 'translate-y-2');
-            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-2'); }, 3000);
-        }
     </script>
 </body>
 </html>
+
 
