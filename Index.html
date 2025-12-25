@@ -14,7 +14,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
-        .custom-card { box-shadow: 0 8px GqaafEHQSnEyZqrjQT0r_6jXMaGQ12px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; }
+        .custom-card { box-shadow: 0 8px 12px rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; }
         .clickable-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px rgba(0, 0, 0, 0.08); cursor: pointer; }
         .submit-btn { background: linear-gradient(90deg, #3b82f6, #60a5fa); transition: all 0.3s ease; }
         .submit-btn:hover { box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
@@ -260,14 +260,14 @@
                     <div>
                         <label for="stackNumber" class="block text-sm font-medium text-gray-600 mb-1">Stack Number</label>
                         <div class="flex items-center gap-2">
-                            <input type="number" id="stackNumber" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <input type="number" id="stackNumber" name="stackNumber" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                             <button type="button" id="save-stack-btn" title="Save Stack Number" class="p-2 bg-blue-100 text-blue-700 rounded-lg"><i data-lucide="save" class="w-5 h-5"></i></button>
                         </div>
                     </div>
                     <div>
                         <label for="date" class="block text-sm font-medium text-gray-600 mb-1">Date</label>
                         <div class="flex items-center gap-2">
-                            <input type="date" id="date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            <input type="date" id="date" name="date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                             <button type="button" id="save-date-btn" title="Save Date" class="p-2 bg-blue-100 text-blue-700 rounded-lg"><i data-lucide="save" class="w-5 h-5"></i></button>
                         </div>
                     </div>
@@ -275,16 +275,16 @@
                 <div>
                     <label for="countVan" class="block text-sm font-medium text-gray-600 mb-1">Count Van</label>
                     <div class="flex items-center gap-4">
-                        <input type="text" inputmode="numeric" id="countVan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <input type="text" inputmode="numeric" id="countVan" name="countVan" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
                         <div class="flex items-center whitespace-nowrap">
-                            <input type="checkbox" id="madeup-checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <input type="checkbox" id="madeup-checkbox" name="madeupCheckbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                             <label for="madeup-checkbox" class="ml-2 text-sm text-gray-600">Made-up</label>
                         </div>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label for="bags" class="block text-sm font-medium text-gray-600 mb-1">Bags</label><input type="number" id="bags" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
-                    <div><label for="weight" class="block text-sm font-medium text-gray-600 mb-1">Weight (MT)</label><input type="number" step="0.001" id="weight" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
+                    <div><label for="bags" class="block text-sm font-medium text-gray-600 mb-1">Bags</label><input type="number" id="bags" name="bags" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
+                    <div><label for="weight" class="block text-sm font-medium text-gray-600 mb-1">Weight (MT)</label><input type="number" step="0.001" id="weight" name="weight" required class="w-full px-4 py-2 border border-gray-300 rounded-lg"></div>
                 </div>
                 <div class="pt-2 space-y-3">
                     <button type="submit" class="w-full text-white font-bold py-3 px-4 rounded-lg submit-btn">Submit Data</button>
@@ -325,7 +325,10 @@
                 <div id="net-card" class="bg-white rounded-xl p-5 custom-card clickable-card"><h3 class="font-semibold text-gray-500">Net Stock</h3><p id="netBags" class="text-3xl font-bold text-blue-600 mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="netWeight" class="text-2xl font-bold text-blue-600 mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>
                 <div class="bg-gray-800 text-white rounded-xl p-5 custom-card"><h3 class="font-semibold text-gray-400">Grand Total</h3><p id="grandTotalBags" class="text-3xl font-bold mt-2">0 <span class="text-base font-medium">Bags</span></p><p id="grandTotalWeight" class="text-2xl font-bold mt-1">0.000 <span class="text-base font-medium">MT</span></p></div>`;
             
-            lucide.createIcons();
+            // Check if lucide exists before trying to create icons to prevent crash
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         }
         
         function loadSavedData() {
@@ -337,12 +340,14 @@
             const stackInput = document.getElementById('stackNumber');
             const txTypeInput = document.getElementById('transactionType');
 
-            if (savedStack) stackInput.value = savedStack;
+            if (savedStack && stackInput) stackInput.value = savedStack;
             
-            if (savedDate) dateInput.value = savedDate;
-            else dateInput.valueAsDate = new Date();
+            if (dateInput) {
+                if (savedDate) dateInput.value = savedDate;
+                else dateInput.valueAsDate = new Date();
+            }
 
-            if (savedTxType) txTypeInput.value = savedTxType;
+            if (savedTxType && txTypeInput) txTypeInput.value = savedTxType;
         }
 
         function setupEventListeners() {
@@ -391,9 +396,12 @@
                 localStorage.removeItem('savedStackNumber');
                 localStorage.removeItem('savedDate');
                 localStorage.removeItem('savedTransactionType');
+                
+                // Clear inputs visually as well
                 document.getElementById('stackNumber').value = '';
                 document.getElementById('date').valueAsDate = new Date();
                 document.getElementById('transactionType').value = 'inward';
+                
                 showToast('Saved data has been reset.');
             });
 
@@ -428,10 +436,19 @@
         function handleDataFormSubmit(e) {
             e.preventDefault();
             const form = e.target;
-            const bags = Number(document.getElementById('bags').value);
-            const stackNumber = document.getElementById('stackNumber').value;
-            const countVan = document.getElementById('countVan').value;
-            const date = document.getElementById('date').value;
+            
+            // Safe element access
+            const bagsInput = document.getElementById('bags');
+            const weightInput = document.getElementById('weight');
+            const stackInput = document.getElementById('stackNumber');
+            const dateInput = document.getElementById('date');
+            const vanInput = document.getElementById('countVan');
+            const madeupCheck = document.getElementById('madeup-checkbox');
+
+            const bags = Number(bagsInput.value);
+            const stackNumber = stackInput.value;
+            const countVan = vanInput.value;
+            const date = dateInput.value;
 
             if (bags <= 0) { showToast("Bags must be greater than 0.", false); return; }
             if (!stackNumber || !date || !countVan.trim()) { showToast('Please fill all fields correctly.', false); return; }
@@ -440,17 +457,30 @@
             const transaction = {
                 stackNumber: stackNumber, date: date, countVan: countVan.trim(),
                 commodity: selectedCommodity, transactionType: document.getElementById('transactionType').value,
-                bags: bags, weight: Number(document.getElementById('weight').value),
+                bags: bags, weight: Number(weightInput.value),
                 timestamp: new Date().toISOString()
             };
 
             push(transactionsRef, transaction).then(() => {
                 showToast('Data submitted successfully!');
-                form.bags.value = '';
-                form.weight.value = '';
-                form.countVan.value = '';
-                form['madeup-checkbox'].checked = false;
-                form.countVan.disabled = false;
+                
+                // Clear fields safely
+                bagsInput.value = '';
+                weightInput.value = '';
+                
+                // Reset van input unless checked
+                if(!madeupCheck.checked) {
+                    vanInput.value = '';
+                    vanInput.disabled = false;
+                } else {
+                    // if it was made-up, uncheck and clear
+                    madeupCheck.checked = false;
+                    vanInput.value = '';
+                    vanInput.disabled = false;
+                }
+            }).catch(error => {
+                console.error("Firebase Error:", error);
+                showToast("Submission failed: " + error.message, false);
             });
         }
         
