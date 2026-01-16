@@ -196,7 +196,7 @@
 
             <!-- Compact Filter Section -->
             <div class="mb-6 p-4 bg-gray-100 rounded-lg">
-                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
                     <div>
                         <label for="filter-commodity" class="block text-xs font-medium text-gray-600 mb-1">Commodity</label>
                         <select id="filter-commodity" class="filter-input w-full px-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white text-sm">
@@ -205,12 +205,36 @@
                             <option value="Maize">Maize</option>
                         </select>
                     </div>
+
+                    <!-- NEW: Party Filter -->
+                    <div>
+                        <label for="filter-party" class="block text-xs font-medium text-gray-600 mb-1">Party Name</label>
+                        <select id="filter-party" class="filter-input w-full px-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white text-sm">
+                            <option value="All">All Parties</option>
+                            <option value="ITC">ITC</option>
+                            <option value="TYAGI">TYAGI</option>
+                            <option value="SHIVSHANKAR">SHIVSHANKAR</option>
+                            <option value="MANO ENTERPRISES">MANO ENTERPRISES</option>
+                        </select>
+                    </div>
+
                     <div>
                         <label for="filter-stackNumber" class="block text-xs font-medium text-gray-600 mb-1">Stack No.</label>
                         <select id="filter-stackNumber" class="filter-input w-full px-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white text-sm">
                             <option value="">All Stacks</option>
                         </select>
                     </div>
+
+                    <!-- NEW: Bag Type Filter -->
+                    <div>
+                        <label for="filter-bagType" class="block text-xs font-medium text-gray-600 mb-1">Bag Type</label>
+                        <select id="filter-bagType" class="filter-input w-full px-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white text-sm">
+                            <option value="All">All Bags</option>
+                            <option value="Regular">Regular Bags</option>
+                            <option value="Made-up">Made-up Bags</option>
+                        </select>
+                    </div>
+
                     <div>
                         <label for="filter-startDate" class="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
                         <input type="date" id="filter-startDate" class="filter-input w-full px-3 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm">
@@ -300,477 +324,7 @@
         <span id="report-toast-message"></span>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyAgzs3GqaafEHQSnEyZqrjQT0r_6jXMaGQ",
-            authDomain: "re-store-7f2b3.firebaseapp.com",
-            databaseURL: "https://re-store-7f2b3-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "re-store-7f2b3",
-            storageBucket: "re-store-7f2b3.appspot.com",
-            messagingSenderId: "774895588253",
-            appId: "1:774895588253:web:dad6c0fed92bce7c39574"
-        };
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        const auth = getAuth(app);
-        const userEmail = "jackprince79036@gmail.com";
+<script type="module" src="party.js"></script>
 
-        // Login Elements
-        const loginScreen = document.getElementById('login-screen');
-        const appContainer = document.getElementById('app-container');
-        const passwordInput = document.getElementById('password');
-        const loginButton = document.getElementById('login-button');
-        const loginError = document.getElementById('login-error');
-
-        // General DOM Elements
-        const mainContent = document.getElementById('main-content');
-        const reportLoader = document.getElementById('report-loader');
-        const cardTitle = document.getElementById('card-title');
-        const tableBody = document.getElementById('report-transactions-table-body');
-        const noDataMessage = document.getElementById('report-no-data-message');
-        
-        // Filter Elements
-        const filterElements = {
-            commodity: document.getElementById('filter-commodity'),
-            stackNumber: document.getElementById('filter-stackNumber'),
-            startDate: document.getElementById('filter-startDate'),
-            endDate: document.getElementById('filter-endDate')
-        };
-        document.getElementById('reset-filter-btn').addEventListener('click', resetFilters);
-        Object.values(filterElements).forEach(el => el.addEventListener('change', applyFilters));
-
-        // Calculator Elements
-        const checkboxContainer = document.getElementById('stack-checkbox-container');
-        const calculatorDisplayTitle = document.getElementById('calculator-display-title');
-        const calculatorDisplayBags = document.getElementById('calculator-display-bags');
-        const calculatorDisplayWeight = document.getElementById('calculator-display-weight');
-        const calculatorGrossCheckbox = document.getElementById('calculator-gross-checkbox');
-        const multiSelectToggle = document.getElementById('multi-select-toggle');
-
-        calculatorGrossCheckbox.addEventListener('change', updateCalculatorDisplay);
-        multiSelectToggle.addEventListener('change', () => {
-             // Optional: If you want to clear selection when switching modes, uncomment below
-             // document.querySelectorAll('.stack-calculator-checkbox').forEach(cb => cb.checked = false);
-             // updateCalculatorDisplay();
-             showToast(multiSelectToggle.checked ? "Multi-Select Mode ON" : "Single-Select Mode ON");
-        });
-
-        document.querySelectorAll('.calculator-btn').forEach(btn => btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.calculator-btn').forEach(b => b.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-            renderStackCheckboxes(e.currentTarget.dataset.commodityFilter);
-        }));
-
-        let allTransactions = [];
-        let stackMasterData = {};
-        let pieChart = null; 
-
-        // --- Authentication Logic ---
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                loginScreen.style.display = 'none';
-                appContainer.classList.remove('hidden');
-                initializeReportApp();
-            } else {
-                loginScreen.style.display = 'flex';
-                appContainer.classList.add('hidden');
-                reportLoader.style.display = 'none';
-                mainContent.classList.add('hidden');
-            }
-        });
-
-        const handleLogin = () => {
-            const password = passwordInput.value;
-            if (!password) {
-                loginError.textContent = 'Please enter your password.';
-                loginError.classList.remove('hidden');
-                return;
-            }
-            loginError.classList.add('hidden');
-            loginButton.textContent = 'Logging in...';
-            loginButton.disabled = true;
-
-            signInWithEmailAndPassword(auth, userEmail, password)
-                .catch((error) => {
-                    loginError.textContent = 'Incorrect password. Please try again.';
-                    loginError.classList.remove('hidden');
-                    loginButton.textContent = 'Login';
-                    loginButton.disabled = false;
-                });
-        };
-        
-        loginButton.addEventListener('click', handleLogin);
-        passwordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin();
-        });
-
-
-        // --- Report App Initialization ---
-        function initializeReportApp() {
-            const transactionsRef = ref(database, 'transactions');
-            onValue(transactionsRef, (snapshot) => {
-                const rawData = snapshot.val() || {};
-                allTransactions = Object.values(rawData);
-                
-                processMasterData(allTransactions);
-                document.querySelector('#total-stacks-display span').textContent = Object.keys(stackMasterData).length;
-
-                populateStackDropdown();
-                renderStackCheckboxes('All');
-                applyFilters(); 
-                
-                reportLoader.style.display = 'none';
-                mainContent.classList.remove('hidden');
-            }, { once: true });
-        }
-
-        function processMasterData(transactions) {
-            const stackData = {};
-            transactions.forEach(tx => {
-                const stackNum = tx.stackNumber;
-                if (!stackData[stackNum]) {
-                    stackData[stackNum] = {
-                        netBags: 0, netWeight: 0,
-                        inwardBags: 0, inwardWeight: 0,
-                        commodities: new Set()
-                    };
-                }
-                const bags = tx.bags || 0;
-                const weight = tx.weight || 0;
-
-                if (tx.transactionType === 'inward') {
-                    stackData[stackNum].netBags += bags;
-                    stackData[stackNum].netWeight += weight;
-                    stackData[stackNum].inwardBags += bags;
-                    stackData[stackNum].inwardWeight += weight;
-                } else {
-                    stackData[stackNum].netBags -= bags;
-                    stackData[stackNum].netWeight -= weight;
-                }
-                stackData[stackNum].commodities.add(tx.commodity);
-            });
-            for (const stack in stackData) {
-                stackData[stack].netWeight = parseFloat(stackData[stack].netWeight.toFixed(5));
-            }
-            stackMasterData = stackData;
-        }
-
-        function populateStackDropdown() {
-            const stackSelect = filterElements.stackNumber;
-            const existingValue = stackSelect.value;
-            const stackNumbers = Object.keys(stackMasterData).sort((a, b) => a - b);
-            
-            stackSelect.innerHTML = '<option value="">All Stacks</option>';
-            stackNumbers.forEach(stack => {
-                const option = document.createElement('option');
-                option.value = stack;
-                option.textContent = stack;
-                stackSelect.appendChild(option);
-            });
-            if (stackNumbers.includes(existingValue)) {
-                stackSelect.value = existingValue;
-            }
-        }
-
-        // --- Filter Logic ---
-        function applyFilters() {
-            const filters = {
-                commodity: filterElements.commodity.value,
-                stackNumber: filterElements.stackNumber.value,
-                startDate: filterElements.startDate.value,
-                endDate: filterElements.endDate.value,
-            };
-            
-            const stackNumberDisplay = filters.stackNumber ? filters.stackNumber.toUpperCase() : '';
-            const titleStackPart = stackNumberDisplay ? `- Stack <span class="text-blue-600 font-bold">${stackNumberDisplay}</span>` : '';
-            cardTitle.innerHTML = `${filters.commodity === 'All' ? 'All Commodities' : filters.commodity} Summary ${titleStackPart}`;
-
-            const filteredTransactions = allTransactions.filter(tx => 
-                (filters.commodity === 'All' || tx.commodity === filters.commodity) &&
-                (!filters.stackNumber || tx.stackNumber === filters.stackNumber) &&
-                (!filters.startDate || tx.date >= filters.startDate) &&
-                (!filters.endDate || tx.date <= filters.endDate)
-            );
-
-            updateCompactCard(filteredTransactions);
-            populateReportTable(filteredTransactions);
-            updatePieChart(); 
-        }
-
-        function resetFilters() {
-            filterElements.commodity.value = 'All';
-            filterElements.stackNumber.value = '';
-            filterElements.startDate.value = '';
-            filterElements.endDate.value = '';
-            applyFilters();
-            showToast('Filters reset ho gaye.');
-        }
-
-        function updateCompactCard(transactions) {
-            let stats = { inwardBags: 0, inwardWeight: 0, outwardBags: 0, outwardWeight: 0 };
-            transactions.forEach(tx => {
-                const bags = tx.bags || 0;
-                const weight = tx.weight || 0;
-                if (tx.transactionType === 'inward') {
-                    stats.inwardBags += bags;
-                    stats.inwardWeight += weight;
-                } else {
-                    stats.outwardBags += bags;
-                    stats.outwardWeight += weight;
-                }
-            });
-
-            const netBags = stats.inwardBags - stats.outwardBags;
-            const netWeight = stats.inwardWeight - stats.outwardWeight;
-            
-            document.getElementById('card-inward-bags').textContent = stats.inwardBags.toLocaleString();
-            document.getElementById('card-inward-weight').textContent = stats.inwardWeight.toFixed(3);
-            document.getElementById('card-outward-bags').textContent = stats.outwardBags.toLocaleString();
-            document.getElementById('card-outward-weight').textContent = stats.outwardWeight.toFixed(3);
-            document.getElementById('card-net-bags').textContent = netBags.toLocaleString();
-            document.getElementById('card-net-weight').textContent = netWeight.toFixed(3);
-
-            const avgWeightSpan = document.getElementById('avg-weight-display');
-            const stackFilterValue = filterElements.stackNumber.value;
-
-            if (stackFilterValue && netBags > 0) {
-                const avgWeightKg = (netWeight * 1000) / netBags;
-                avgWeightSpan.textContent = `(Avg. ${avgWeightKg.toFixed(2)} kg/Bag)`;
-                avgWeightSpan.classList.remove('hidden');
-            } else {
-                avgWeightSpan.classList.add('hidden');
-            }
-
-            updateDateRange(transactions);
-        }
-        
-        function updateDateRange(transactions) {
-            const cardDateRange = document.getElementById('card-date-range');
-            if (transactions.length === 0) {
-                cardDateRange.textContent = 'Date Range: N/A';
-                return;
-            }
-            const dates = transactions.map(tx => new Date(tx.date));
-            const minDate = new Date(Math.min.apply(null, dates));
-            const maxDate = new Date(Math.max.apply(null, dates));
-            const formatDate = (date) => `${date.getDate().toString().padStart(2,'0')}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getFullYear()}`;
-            
-            cardDateRange.textContent = `Date Range: ${formatDate(minDate)} to ${formatDate(maxDate)}`;
-        }
-
-        function populateReportTable(transactions) {
-            tableBody.innerHTML = '';
-            noDataMessage.classList.toggle('hidden', transactions.length > 0);
-            if (transactions.length > 0) {
-                transactions.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(tx => {
-                    tableBody.insertRow().innerHTML = `
-                        <td class="p-3">${tx.date}</td>
-                        <td class="p-3">${tx.stackNumber}</td>
-                        <td class="p-3">${tx.countVan}</td>
-                        <td class="p-3">${tx.transactionType === 'inward' ? 
-                            '<span class="font-semibold text-green-700">Inward</span>' : 
-                            '<span class="font-semibold text-red-700">Outward</span>'}
-                        </td>
-                        <td class="p-3">${(tx.bags || 0).toLocaleString()}</td>
-                        <td class="p-3">${(tx.weight || 0).toFixed(3)} MT</td>
-                    `;
-                });
-            }
-        }
-
-        // --- Pie Chart Logic ---
-        function updatePieChart() {
-            const canvas = document.getElementById('stockPieChart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            Chart.register(ChartDataLabels);
-
-            const selectedStackFilter = filterElements.stackNumber.value;
-            const selectedCommodityFilter = filterElements.commodity.value;
-
-            let chartConfig = { labels: [], data: [], colors: [] };
-
-            if (selectedStackFilter) {
-                const selectedStackNetWeight = stackMasterData[selectedStackFilter]?.netWeight || 0;
-                let totalNetWeightOfAllStacks = 0;
-                Object.keys(stackMasterData).forEach(stackNum => {
-                    if (selectedCommodityFilter === 'All' || stackMasterData[stackNum].commodities.has(selectedCommodityFilter)) {
-                         totalNetWeightOfAllStacks += stackMasterData[stackNum].netWeight;
-                    }
-                });
-                const otherStacksNetWeight = totalNetWeightOfAllStacks - selectedStackNetWeight;
-
-                chartConfig.labels = [`Stack ${selectedStackFilter}`, 'Other Stacks'];
-                chartConfig.data = [selectedStackNetWeight, otherStacksNetWeight];
-                chartConfig.colors = ['#3b82f6', '#9ca3af'];
-            
-            } else {
-                let wheatNetWeight = 0;
-                let maizeNetWeight = 0;
-                
-                allTransactions.forEach(tx => {
-                    const weight = tx.transactionType === 'inward' ? (tx.weight || 0) : -(tx.weight || 0);
-                    if (tx.commodity === 'Wheat') wheatNetWeight += weight;
-                    if (tx.commodity === 'Maize') maizeNetWeight += weight;
-                });
-                
-                wheatNetWeight = parseFloat(wheatNetWeight.toFixed(3));
-                maizeNetWeight = parseFloat(maizeNetWeight.toFixed(3));
-                
-                if (selectedCommodityFilter === 'All') {
-                    chartConfig.labels = ['Wheat', 'Maize'];
-                    chartConfig.data = [wheatNetWeight, maizeNetWeight];
-                    chartConfig.colors = ['#f59e0b', '#10b981'];
-                } else if (selectedCommodityFilter === 'Wheat') {
-                    chartConfig.labels = ['Wheat'];
-                    chartConfig.data = [wheatNetWeight];
-                    chartConfig.colors = ['#f59e0b'];
-                } else if (selectedCommodityFilter === 'Maize') {
-                    chartConfig.labels = ['Maize'];
-                    chartConfig.data = [maizeNetWeight];
-                    chartConfig.colors = ['#10b981'];
-                }
-            }
-            
-            chartConfig.data = chartConfig.data.map(d => Math.max(0, d));
-
-            if (pieChart) pieChart.destroy();
-            
-            const totalDataValue = chartConfig.data.reduce((a, b) => a + b, 0);
-            if (totalDataValue <= 0.001) { 
-                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                 ctx.save();
-                 ctx.textAlign = 'center';
-                 ctx.textBaseline = 'middle';
-                 ctx.fillStyle = '#6b7280';
-                 ctx.font = "16px 'Inter'";
-                 ctx.fillText('No data to display for this filter', canvas.width / 2, canvas.height / 2);
-                 ctx.restore();
-                 return;
-            }
-
-            pieChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: chartConfig.labels,
-                    datasets: [{
-                        data: chartConfig.data,
-                        backgroundColor: chartConfig.colors,
-                        borderColor: '#ffffff',
-                        borderWidth: 3,
-                        hoverOffset: 12
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: { padding: 20 },
-                    plugins: {
-                        datalabels: {
-                            formatter: (value, ctx) => {
-                                const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                const percentage = total > 0 ? (value / total * 100) : 0;
-                                return percentage > 5 ? percentage.toFixed(1) + '%' : '';
-                            },
-                            color: '#fff',
-                            font: { weight: 'bold', size: 14, family: "'Inter', sans-serif" },
-                            textStrokeColor: '#374151',
-                            textStrokeWidth: 2
-                        },
-                        legend: {
-                            position: 'bottom',
-                            labels: { padding: 25, usePointStyle: true, pointStyle: 'circle', font: { size: 13, family: "'Inter', sans-serif" } }
-                        },
-                        tooltip: {
-                            enabled: true,
-                            backgroundColor: '#1f2937',
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 12 },
-                            padding: 10,
-                            callbacks: {
-                                label: function(context) { return ` ${context.label}: ${context.parsed.toFixed(3)} MT`; }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // --- Stack Calculator Logic ---
-        function renderStackCheckboxes(commodityFilter) {
-            checkboxContainer.innerHTML = '';
-            const stackNumbers = Object.keys(stackMasterData).sort((a, b) => a - b);
-            
-            stackNumbers.forEach(stackNum => {
-                const stackInfo = stackMasterData[stackNum];
-                if (commodityFilter === 'All' || stackInfo.commodities.has(commodityFilter)) {
-                    const label = document.createElement('label');
-                    label.className = "flex items-center gap-1.5 p-1 rounded hover:bg-gray-200 cursor-pointer";
-                    label.innerHTML = `
-                        <input type="checkbox" data-stack="${stackNum}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 stack-calculator-checkbox">
-                        <span class="font-medium text-gray-700">${stackNum}</span>
-                    `;
-                    checkboxContainer.appendChild(label);
-                }
-            });
-
-            // Logic Update: Handle Click Events based on Mode
-            document.querySelectorAll('.stack-calculator-checkbox').forEach(cb => {
-                cb.addEventListener('change', function(e) {
-                    const isMultiMode = multiSelectToggle.checked;
-                    
-                    // IF Multi-mode OFF (Single mode) AND checkbox is now Checked
-                    if (!isMultiMode && this.checked) {
-                        // Uncheck all other boxes
-                        document.querySelectorAll('.stack-calculator-checkbox').forEach(other => {
-                            if (other !== this) {
-                                other.checked = false;
-                            }
-                        });
-                    }
-                    
-                    updateCalculatorDisplay();
-                });
-            });
-            updateCalculatorDisplay();
-        }
-
-        function updateCalculatorDisplay() {
-            const isGrossMode = calculatorGrossCheckbox.checked;
-            let totalBags = 0;
-            let totalWeight = 0;
-            const checkedBoxes = document.querySelectorAll('.stack-calculator-checkbox:checked');
-            
-            checkedBoxes.forEach(cb => {
-                const stackNum = cb.dataset.stack;
-                if (stackMasterData[stackNum]) {
-                    if (isGrossMode) {
-                        totalBags += stackMasterData[stackNum].inwardBags;
-                        totalWeight += stackMasterData[stackNum].inwardWeight;
-                    } else {
-                        totalBags += stackMasterData[stackNum].netBags;
-                        totalWeight += stackMasterData[stackNum].netWeight;
-                    }
-                }
-            });
-
-            calculatorDisplayTitle.textContent = isGrossMode ? 'Selected Gross Inward:' : 'Selected Net Stock:';
-            calculatorDisplayBags.textContent = totalBags.toLocaleString();
-            calculatorDisplayWeight.textContent = totalWeight.toFixed(3);
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('report-toast');
-            toast.querySelector('span').textContent = message;
-            toast.classList.remove('opacity-0', 'translate-y-2');
-            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-2'); }, 3000);
-        }
-    </script>
 </body>
 </html>
-
