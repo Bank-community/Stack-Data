@@ -6,10 +6,8 @@
     <title>Stack Calculator</title>
 
     <link rel="icon" type="image/png" href="https://i.ibb.co/0wSg8RV/20250923-190600.png">
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -119,7 +117,6 @@
 </head>
 <body class="antialiased text-gray-800 flex flex-col justify-center items-center">
 
-    <!-- Login Screen -->
     <div id="login-screen">
         <div class="w-full max-w-sm p-8 space-y-6 bg-white rounded-xl shadow-lg custom-card mx-4">
             <div>
@@ -127,7 +124,7 @@
                     Stack Calculator
                 </h2>
                 <p class="mt-2 text-center text-sm text-gray-600">
-                    Please enter your password to continue
+                    Verifying credentials...
                 </p>
             </div>
             <div class="space-y-4">
@@ -138,35 +135,38 @@
                  <p id="login-error" class="text-xs text-red-600 text-center hidden"></p>
             </div>
             <button id="login-button" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Login
+                Login / Verify
             </button>
         </div>
     </div>
 
-    <!-- Main Card Container (Hidden initially) -->
     <div id="app-container" class="w-full max-w-md bg-white rounded-2xl p-6 custom-card relative hidden mx-4 my-6">
         
-        <!-- Header -->
-        <h3 class="text-2xl font-extrabold text-gray-800 mb-5 text-center tracking-tight">Stack Calculator</h3>
+        <a href="https://stack-data.vercel.app/dashboard.html" class="block mb-5 text-center group">
+            <h3 class="text-2xl font-extrabold text-gray-800 tracking-tight group-hover:text-blue-600 transition-colors">Stack Calculator ↗</h3>
+        </a>
         
-        <!-- Loading State for Data -->
-        <div id="loader-overlay" class="absolute inset-0 bg-white/90 z-10 flex flex-col justify-center items-center rounded-2xl">
+        <div id="loader-overlay" class="absolute inset-0 bg-white/90 z-10 flex flex-col justify-center items-center rounded-2xl hidden">
             <div class="loader mb-2"></div>
-            <p class="text-sm text-gray-500 font-medium">Fetching Data...</p>
+            <p class="text-sm text-gray-500 font-medium">Updating Data...</p>
         </div>
 
-        <!-- Display Area -->
         <div class="bg-gradient-to-r from-indigo-50 to-blue-50 p-5 rounded-xl text-center mb-6 border border-indigo-100 shadow-sm">
             <span id="calculator-display-title" class="font-bold text-gray-700 block mb-1">Selected Net Stock:</span>
-            <div class="font-extrabold text-2xl tracking-tight">
+            
+            <div class="font-extrabold text-2xl tracking-tight mb-2">
                 <span id="calculator-display-bags" class="text-indigo-700">0</span> <span class="text-base text-gray-500 font-medium">Bags</span> <span class="text-gray-300 mx-1">/</span>
                 <span id="calculator-display-weight" class="text-indigo-700">0.000</span> <span class="text-base text-gray-500 font-medium">MT</span>
             </div>
+
+            <div class="border-t border-indigo-200 pt-2 flex justify-center items-baseline gap-2">
+                <span class="text-sm font-semibold text-gray-500">Avg:</span>
+                <span id="calculator-display-average" class="text-lg font-bold text-indigo-600">0.00000</span>
+                <span class="text-xs text-gray-400 font-medium">MT/Bag</span>
+            </div>
         </div>
         
-        <!-- Controls Row -->
         <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-            <!-- Commodity Buttons -->
             <div class="flex items-center gap-2">
                 <button class="calculator-btn active" data-commodity-filter="All">All</button>
                 <button class="calculator-btn" data-commodity-filter="Wheat">Wheat</button>
@@ -174,16 +174,20 @@
             </div>
         </div>
 
-        <!-- Toggles Row -->
-         <div class="flex justify-between items-center gap-4 mb-5 px-1">
-            <!-- Gross Inward Checkbox -->
-            <div class="flex items-center">
-                <input type="checkbox" id="calculator-gross-checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
-                <label for="calculator-gross-checkbox" class="ml-2 text-base font-semibold text-gray-600 cursor-pointer select-none">Gross Inward</label>
+        <div class="flex flex-wrap justify-between items-center gap-y-3 gap-x-2 mb-5 px-1">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center">
+                    <input type="checkbox" id="calculator-gross-checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                    <label for="calculator-gross-checkbox" class="ml-2 text-sm sm:text-base font-semibold text-gray-600 cursor-pointer select-none">Inward</label>
+                </div>
+
+                <div class="flex items-center border-l pl-3 border-gray-300">
+                    <input type="checkbox" id="calculator-outward-checkbox" class="h-5 w-5 rounded border-red-300 text-red-600 focus:ring-red-500 cursor-pointer">
+                    <label for="calculator-outward-checkbox" class="ml-2 text-sm sm:text-base font-semibold text-gray-600 cursor-pointer select-none">Outward</label>
+                </div>
             </div>
             
-            <!-- Multi-Select Toggle -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 ml-auto">
                 <span class="text-sm font-bold text-gray-500 uppercase tracking-wide">Multi</span>
                 <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in">
                     <input type="checkbox" name="toggle" id="multi-select-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer hidden"/>
@@ -192,16 +196,12 @@
             </div>
         </div>
 
-        <!-- Divider -->
         <div class="h-px bg-gray-200 w-full mb-5"></div>
 
-        <!-- Checkbox List (Grid) -->
         <div id="stack-checkbox-container" class="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-[55vh] overflow-y-auto p-2">
-            <!-- Checkboxes will be injected here -->
-        </div>
+            </div>
     </div>
 
-    <!-- Link to external JavaScript file -->
     <script type="module" src="calculator.js"></script>
 
 </body>
