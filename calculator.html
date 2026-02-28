@@ -8,6 +8,9 @@
     <link rel="icon" type="image/png" href="https://i.ibb.co/0wSg8RV/20250923-190600.png">
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -142,9 +145,14 @@
 
     <div id="app-container" class="w-full max-w-md bg-white rounded-2xl p-6 custom-card relative hidden mx-4 my-6">
         
-        <a href="https://stack-data.vercel.app/dashboard.html" class="block mb-5 text-center group">
-            <h3 class="text-2xl font-extrabold text-gray-800 tracking-tight group-hover:text-blue-600 transition-colors">Stack Calculator ↗</h3>
-        </a>
+        <div class="flex justify-between items-center mb-5">
+            <a href="https://stack-data.vercel.app/dashboard.html" class="block group">
+                <h3 class="text-2xl font-extrabold text-gray-800 tracking-tight group-hover:text-blue-600 transition-colors">Stack Calculator ↗</h3>
+            </a>
+            <button id="download-pdf-btn" class="flex items-center justify-center w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200" title="Download PDF Report">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
+            </button>
+        </div>
         
         <div id="loader-overlay" class="absolute inset-0 bg-white/90 z-10 flex flex-col justify-center items-center rounded-2xl hidden">
             <div class="loader mb-2"></div>
