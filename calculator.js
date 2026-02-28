@@ -35,8 +35,9 @@ const calculatorDisplayBags = document.getElementById('calculator-display-bags')
 const calculatorDisplayWeight = document.getElementById('calculator-display-weight');
 const calculatorDisplayAverage = document.getElementById('calculator-display-average'); 
 const calculatorGrossCheckbox = document.getElementById('calculator-gross-checkbox');
-const calculatorOutwardCheckbox = document.getElementById('calculator-outward-checkbox'); // NEW Outward Checkbox
+const calculatorOutwardCheckbox = document.getElementById('calculator-outward-checkbox'); 
 const multiSelectToggle = document.getElementById('multi-select-toggle');
+const downloadPdfBtn = document.getElementById('download-pdf-btn'); // NEW: PDF Button
 
 let stackMasterData = {};
 let currentCommodityFilter = 'All';
@@ -112,7 +113,7 @@ function processMasterData(transactions) {
             stackData[stackNum] = {
                 netBags: 0, netWeight: 0,
                 inwardBags: 0, inwardWeight: 0,
-                outwardBags: 0, outwardWeight: 0, // NEW: Track Outward separately
+                outwardBags: 0, outwardWeight: 0, 
                 commodities: new Set()
             };
         }
@@ -125,11 +126,8 @@ function processMasterData(transactions) {
             stackData[stackNum].inwardBags += bags;
             stackData[stackNum].inwardWeight += weight;
         } else {
-            // Outward Logic
             stackData[stackNum].netBags -= bags;
             stackData[stackNum].netWeight -= weight;
-            
-            // NEW: Accumulate Outward totals
             stackData[stackNum].outwardBags += bags;
             stackData[stackNum].outwardWeight += weight;
         }
@@ -186,10 +184,9 @@ function renderStackCheckboxes(commodityFilter) {
     updateCalculatorDisplay();
 }
 
-// --- UPDATED CALCULATOR LOGIC ---
 function updateCalculatorDisplay() {
     const isGrossMode = calculatorGrossCheckbox.checked;
-    const isOutwardMode = calculatorOutwardCheckbox.checked; // NEW Mode
+    const isOutwardMode = calculatorOutwardCheckbox.checked;
 
     let totalBags = 0;
     let totalWeight = 0;
@@ -199,29 +196,25 @@ function updateCalculatorDisplay() {
         const stackNum = cb.dataset.stack;
         if (stackMasterData[stackNum]) {
             if (isGrossMode) {
-                // Show Inward Only
                 totalBags += stackMasterData[stackNum].inwardBags;
                 totalWeight += stackMasterData[stackNum].inwardWeight;
             } else if (isOutwardMode) {
-                // NEW: Show Outward Only
                 totalBags += stackMasterData[stackNum].outwardBags;
                 totalWeight += stackMasterData[stackNum].outwardWeight;
             } else {
-                // Default: Net Stock
                 totalBags += stackMasterData[stackNum].netBags;
                 totalWeight += stackMasterData[stackNum].netWeight;
             }
         }
     });
 
-    // Update Title & Color Context
     if (isGrossMode) {
         calculatorDisplayTitle.textContent = 'Selected Gross Inward:';
         calculatorDisplayBags.className = 'text-indigo-700'; 
         calculatorDisplayWeight.className = 'text-indigo-700';
     } else if (isOutwardMode) {
         calculatorDisplayTitle.textContent = 'Selected Total Outward:';
-        calculatorDisplayBags.className = 'text-red-600'; // Make text red for Outward
+        calculatorDisplayBags.className = 'text-red-600'; 
         calculatorDisplayWeight.className = 'text-red-600';
     } else {
         calculatorDisplayTitle.textContent = 'Selected Net Stock:';
@@ -232,10 +225,8 @@ function updateCalculatorDisplay() {
     calculatorDisplayBags.textContent = totalBags.toLocaleString();
     calculatorDisplayWeight.textContent = totalWeight.toFixed(3);
 
-    // --- LOGIC: (MT * 1000) / Bags ---
     let averageVal = 0;
     if (totalBags > 0) {
-        // Point ko ignore karke (Weight in Kg) / Bags
         const weightInKg = totalWeight * 1000;
         averageVal = weightInKg / totalBags;
     }
@@ -247,22 +238,169 @@ function updateCalculatorDisplay() {
     }
 }
 
+// ==========================================
+// 📄 PDF GENERATION LOGIC (NEW)
+// ==========================================
+async function generatePDF() {
+    if (!window.jspdf) {
+        alert("PDF Library is still loading. Please try again in a few seconds.");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // 1. Dynamic Title Setting
+    let titleText = currentCommodityFilter === 'All' ? 'All Commodities Report' : `${currentCommodityFilter} Stack Report`;
+
+    // 2. Decide Which Stacks To Print
+    const checkedBoxes = Array.from(document.querySelectorAll('.stack-calculator-checkbox:checked'));
+    let selectedStacks = [];
+
+    if (checkedBoxes.length > 0) {
+        // Sirf checked stacks ka PDF banega
+        selectedStacks = checkedBoxes.map(cb => cb.dataset.stack);
+        titleText = `Custom ${titleText}`;
+    } else {
+        // Koi check nahi hai, to current filter ke anusar saare stacks aayenge
+        selectedStacks = Object.keys(stackMasterData).filter(stackNum => {
+            if (currentCommodityFilter === 'All') return true;
+            return stackMasterData[stackNum].commodities.has(currentCommodityFilter);
+        });
+    }
+
+    if (selectedStacks.length === 0) {
+        alert("No stacks available to download.");
+        return;
+    }
+
+    // Sort numerically
+    selectedStacks.sort((a, b) => parseInt(a) - parseInt(b));
+
+    // 3. Prepare Table Data & Totals
+    const tableBody = [];
+    let tInBags = 0, tInMt = 0;
+    let tOutBags = 0, tOutMt = 0;
+    let tAvailBags = 0, tAvailMt = 0;
+
+    selectedStacks.forEach(stackNum => {
+        const d = stackMasterData[stackNum];
+        
+        tInBags += d.inwardBags; tInMt += d.inwardWeight;
+        tOutBags += d.outwardBags; tOutMt += d.outwardWeight;
+        tAvailBags += d.netBags; tAvailMt += d.netWeight;
+
+        // --- Percentage / Gain / Loss Logic ---
+        let statusStr = "-";
+        if (d.inwardWeight > 0) {
+            const diffMt = d.outwardWeight - d.inwardWeight;
+            const percent = (diffMt / d.inwardWeight) * 100;
+
+            if (d.netBags <= 0) { // Stack Empty (0 Bags)
+                if (diffMt > 0) {
+                    statusStr = `+${diffMt.toFixed(3)} MT\n(+${percent.toFixed(2)}%)`;
+                } else if (diffMt < 0) {
+                    statusStr = `${diffMt.toFixed(3)} MT\n(${percent.toFixed(2)}%)`;
+                } else {
+                    statusStr = `0 MT\n(0.00%)`;
+                }
+            } else { // Stack Active
+                if (diffMt > 0) {
+                    statusStr = `+${diffMt.toFixed(3)} MT\n(+${percent.toFixed(2)}%)`; // Chalte stack me profit
+                } else {
+                    statusStr = "Active";
+                }
+            }
+        }
+
+        tableBody.push([
+            stackNum,
+            `${d.inwardBags} / ${d.inwardWeight.toFixed(3)}`,
+            `${d.outwardBags} / ${d.outwardWeight.toFixed(3)}`,
+            `${d.netBags} / ${d.netWeight.toFixed(3)}`,
+            statusStr
+        ]);
+    });
+
+    // Add Grand Total Row
+    tableBody.push([
+        "TOTAL",
+        `${tInBags} / ${tInMt.toFixed(3)}`,
+        `${tOutBags} / ${tOutMt.toFixed(3)}`,
+        `${tAvailBags} / ${tAvailMt.toFixed(3)}`,
+        "-"
+    ]);
+
+    // 4. Draw PDF
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(0, 21, 64);
+    doc.text(titleText, 105, 18, null, null, "center");
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100);
+    const dateStr = new Date().toLocaleString('en-GB');
+    doc.text(`Generated on: ${dateStr}`, 105, 26, null, null, "center");
+
+    // Auto Table Generation
+    doc.autoTable({
+        startY: 35,
+        head: [['Stack No.', 'Total Inward\n(Bags / MT)', 'Total Outward\n(Bags / MT)', 'Available Stock\n(Bags / MT)', 'Gain / Loss\n(MT & %)']],
+        body: tableBody,
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246], textColor: 255, halign: 'center', valign: 'middle' },
+        columnStyles: {
+            0: { halign: 'center', fontStyle: 'bold' },
+            1: { halign: 'right' },
+            2: { halign: 'right' },
+            3: { halign: 'right', fontStyle: 'bold', textColor: [0, 80, 0] },
+            4: { halign: 'center', valign: 'middle' }
+        },
+        willDrawCell: function(data) {
+            // Colorize Text logic for Gain/Loss
+            if (data.column.index === 4 && data.cell.section === 'body') {
+                const text = data.cell.text.join(" ");
+                if (text.includes('+')) {
+                    doc.setTextColor(0, 150, 0); // Green for Gain
+                } else if (text.includes('-') && text !== '-') {
+                    doc.setTextColor(200, 0, 0); // Red for Loss
+                } else if (text === 'Active') {
+                    doc.setTextColor(0, 0, 200); // Blue for Active
+                }
+            }
+            // Make the Total row bold entirely
+            if (data.row.index === tableBody.length - 1 && data.cell.section === 'body') {
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(0, 0, 0); 
+                doc.setFillColor(240, 240, 240); 
+            }
+        }
+    });
+
+    // Save File
+    const fileName = `${titleText.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`;
+    doc.save(fileName);
+}
+
+
 // --- Event Listeners ---
 calculatorGrossCheckbox.addEventListener('change', function() {
-    // If Gross is checked, uncheck Outward
     if(this.checked) calculatorOutwardCheckbox.checked = false;
     updateCalculatorDisplay();
 });
 
-// NEW Listener for Outward
 calculatorOutwardCheckbox.addEventListener('change', function() {
-    // If Outward is checked, uncheck Gross
     if(this.checked) calculatorGrossCheckbox.checked = false;
     updateCalculatorDisplay();
 });
 
-
 loginButton.addEventListener('click', attemptAutoLogin);
+
+// Add listener to the NEW Download button
+if(downloadPdfBtn) {
+    downloadPdfBtn.addEventListener('click', generatePDF);
+}
 
 document.querySelectorAll('.calculator-btn').forEach(btn => btn.addEventListener('click', (e) => {
     document.querySelectorAll('.calculator-btn').forEach(b => b.classList.remove('active'));
