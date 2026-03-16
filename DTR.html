@@ -254,20 +254,24 @@
                 return "All stacks are currently empty (Nil).";
             }
 
-            sortedKeys.forEach(key => {
+                        sortedKeys.forEach(key => {
                 const d = groups[key];
                 
                 const closeB = d.openB + d.todayInB - d.todayOutB;
                 const closeW = d.openW + d.todayInW - d.todayOutW;
 
                 const hasActivityToday = (d.todayInB > 0 || d.todayOutB > 0);
-                const hasStock = (closeB > 0 || closeW > 0.001);
                 
-                // Add to Grand Total
+                // NAYA LOGIC: Yadi Bag 0 (ya minus) ho jaye, YA MT 0 ho jaye, toh usko nill/empty manenge
+                const isNill = (closeB <= 0 || closeW <= 0.001);
+                
+                // Yadi stock nill hai aur aaj koi transaction (In/Out) nahi hua hai, toh usko DTR se hide kar do
+                if (isNill && !hasActivityToday) return;
+
+                // Grand Total mein add hone ka code ab hide hone ke baad rakha hai 
+                // Taki jo DTR mein show na ho, wo total mein bhi add na ho.
                 grandTotalBags += closeB;
                 grandTotalWeight += closeW;
-
-                if (!hasStock && !hasActivityToday) return;
 
                 // Formatting numbers
                 const openWStr = d.openW.toFixed(3);
@@ -283,6 +287,7 @@
                 reportText += `🔴 *Cl:* *${closeB} Bag* |  *${closeWStr} MT*\n`;
                 reportText += `━━━━━━━━━━━━━━━━━━\n\n`;
             });
+
 
             reportText += `📈 *GRAND TOTAL CLOSING*\n`;
             reportText += `📦 Bags: *${grandTotalBags.toLocaleString()}*\n`;
