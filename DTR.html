@@ -166,12 +166,9 @@
         // --- PARTY IDENTIFICATION LOGIC ---
         function getPartyName(stackNum) {
             const s = parseInt(stackNum);
-            if (s === 7) return "Mano Enterprises";
-            if (s >= 1 && s <= 18) return "ITC"; 
-            if ([22, 23, 25, 26, 27].includes(s)) return "Tyagi KRISHI KENDRA";
-            if ([24, 28, 29, 30, 103, 105, 106].includes(s)) return "ITC";
-            if ([101, 102, 104].includes(s)) return "SHIVSHANKAR Trading";
-            return "General Party";
+          
+            if (s >= 1 && s <= 10) return "JAY MAHADEV"; 
+                   return "General Party";
         }
 
         // --- REPORT GENERATION LOGIC ---
@@ -244,7 +241,7 @@
             // Header
             let reportText = `📊 *DAILY STOCK REPORT* 📊\n`;
             reportText += `📅 Date: *${todayStr}*\n`;
-            reportText += `🏢 *RUDRANSH WAREHOUSE* (Begusarai)\n`;
+            reportText += `🏢 *NM BUILD WAREHOUSE* (Baliya)\n`;
             reportText += `📝 Subject: Daily Inward/Outward Report\n`;
             reportText += `━━━━━━━━━━━━━━━━━━\n\n`;
 
