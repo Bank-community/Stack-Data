@@ -37,7 +37,6 @@
 </head>
 <body class="antialiased text-gray-800 h-screen flex flex-col">
 
-    <!-- Login Screen -->
     <div id="login-screen" class="fixed inset-0 z-50 flex justify-center items-center bg-gray-100">
         <div class="w-full max-w-sm p-8 bg-white rounded-2xl shadow-xl text-center">
             <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -50,10 +49,8 @@
         </div>
     </div>
 
-    <!-- Main App Container -->
     <div id="app-container" class="container mx-auto max-w-3xl p-4 sm:p-6 hidden flex-grow">
         
-        <!-- Header -->
         <header class="flex justify-between items-center mb-6">
             <div>
                 <h1 class="text-2xl font-extrabold text-gray-900 flex items-center gap-2">
@@ -66,10 +63,8 @@
             </button>
         </header>
 
-        <!-- Controls Row -->
         <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-200 mb-4 flex flex-wrap justify-between items-center gap-2">
             
-            <!-- Left Side: Edit & Refresh -->
             <div class="flex gap-2">
                 <button id="editBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-2 shadow-sm transition">
                     <i class="ph-bold ph-pencil-simple"></i> Edit
@@ -78,9 +73,12 @@
                 <button id="refreshBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-2 shadow-sm transition">
                     <i class="ph-bold ph-arrows-clockwise"></i> Refresh
                 </button>
+                
+                <button id="copyBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-2 shadow-sm transition" title="Copy Text to Clipboard">
+                    <i class="ph-bold ph-copy"></i> Copy Text
+                </button>
             </div>
 
-            <!-- Right Side: WhatsApp -->
             <button id="whatsappShareBtn" class="bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center gap-2 shadow-lg shadow-green-500/30 transition">
                 <i class="ph-fill ph-whatsapp-logo text-lg"></i>
                 WhatsApp
@@ -91,16 +89,13 @@
              <span id="statusMsg" class="text-[10px] font-bold text-green-600 fade-in"></span>
         </div>
 
-        <!-- Main Report Area -->
         <main class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden relative min-h-[400px]">
             
-            <!-- Loading Overlay -->
             <div id="loading-overlay" class="absolute inset-0 bg-white z-10 flex flex-col items-center justify-center">
                 <div class="loader mb-2"></div>
                 <p class="text-xs text-blue-600 font-bold">Designing Beautiful Report...</p>
             </div>
 
-            <!-- Content -->
             <div class="p-6 md:p-8 bg-gray-50 min-h-full">
                 <pre id="reportContent" class="text-sm text-gray-800 font-mono whitespace-pre-wrap" contenteditable="false"></pre>
             </div>
@@ -111,7 +106,6 @@
         </div>
     </div>
 
-    <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
@@ -289,6 +283,21 @@
             reportText += `📈 *GRAND TOTAL CLOSING*\n`;
             reportText += `📦 Bags: *${grandTotalBags.toLocaleString()}*\n`;
             reportText += `⚖️ MT:   *${grandTotalWeight.toFixed(3)}*`;
+            
+            // --- NEW TEXT ADDED AT THE VERY END FROM IMAGE 1 ---
+            
+            // Spacing for distinction
+            reportText += `\n\n━━━━━━━━━━━━━━━━━━\n\n`;
+            
+            // Formatting precisely to match image, adding standard icons for professional look
+            // Using precise date '11/4/2026' from the request
+            
+            reportText += `🏦 *BANK NAME.* :- *HDFC*\n`;
+            reportText += `💰 *Funding Bags:* 5,200\n`;
+            reportText += `⚖️ *Funding MT:* 300.580\n\n`; // Note: image shows no 'MT' text, but it's clearly MT data. Let's make it consistent.
+            
+            reportText += `🧹 *LAST FUMIGATION:* 0\n`;
+            reportText += `🚿 *LAST SPRAY:* 11/4/2026`; 
 
             return reportText;
         }
@@ -337,6 +346,36 @@
         document.getElementById('refreshBtn').addEventListener('click', () => {
             if(confirm("Refresh from Database? Any manual edits will be lost.")) {
                 loadData();
+            }
+        });
+        
+        // --- NEW COPY FUNCTIONALITY ---
+        const copyBtn = document.getElementById('copyBtn');
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = reportEl.innerText;
+            if (textToCopy) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    // Visual feedback for successful copy
+                    statusMsg.innerText = "✓ Text Copied to Clipboard!";
+                    statusMsg.classList.remove('text-green-600');
+                    statusMsg.classList.add('text-blue-600'); // Use blue for copy success
+                    setTimeout(() => {
+                        statusMsg.innerText = "";
+                        statusMsg.classList.add('text-green-600');
+                        statusMsg.classList.remove('text-blue-600');
+                    }, 2500);
+                }).catch(err => {
+                    // Visual feedback for failed copy
+                    statusMsg.innerText = "✗ Failed to copy. Please try manually.";
+                    statusMsg.classList.remove('text-green-600');
+                    statusMsg.classList.add('text-red-600');
+                    console.error("Copy failed:", err);
+                    setTimeout(() => {
+                        statusMsg.innerText = "";
+                        statusMsg.classList.add('text-green-600');
+                        statusMsg.classList.remove('text-red-600');
+                    }, 3000);
+                });
             }
         });
 
