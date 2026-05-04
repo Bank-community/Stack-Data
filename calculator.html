@@ -116,6 +116,14 @@
             background-color: #f3f4f6;
             z-index: 50;
         }
+
+        /* View Report Button Pulse on hover */
+        #view-report-btn:hover {
+            transform: scale(1.05);
+        }
+        #view-report-btn {
+            transition: all 0.2s ease-in-out;
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800 flex flex-col justify-center items-center">
@@ -149,9 +157,34 @@
             <a href="https://stack-data.vercel.app/dashboard.html" class="block group">
                 <h3 class="text-2xl font-extrabold text-gray-800 tracking-tight group-hover:text-blue-600 transition-colors">Stack Calculator ↗</h3>
             </a>
-            <button id="download-pdf-btn" class="flex items-center justify-center w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200" title="Download PDF Report">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
-            </button>
+
+            <!-- ✅ BUTTON GROUP: PDF + View Report -->
+            <div class="flex items-center gap-2">
+                <!-- 👁 View Report Button (NEW) -->
+                <button id="view-report-btn"
+                    class="flex items-center justify-center w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full hover:bg-emerald-100 shadow-sm border border-emerald-200"
+                    title="View Report">
+                    <!-- Eye Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </button>
+
+                <!-- 📄 Download PDF Button (ORIGINAL - UNCHANGED) -->
+                <button id="download-pdf-btn"
+                    class="flex items-center justify-center w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200"
+                    title="Download PDF Report">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+                        <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+                        <path d="M12 18v-6"/>
+                        <path d="m9 15 3 3 3-3"/>
+                    </svg>
+                </button>
+            </div>
         </div>
         
         <div id="loader-overlay" class="absolute inset-0 bg-white/90 z-10 flex flex-col justify-center items-center rounded-2xl hidden">
@@ -207,10 +240,40 @@
         <div class="h-px bg-gray-200 w-full mb-5"></div>
 
         <div id="stack-checkbox-container" class="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-[55vh] overflow-y-auto p-2">
-            </div>
+        </div>
     </div>
 
     <script type="module" src="calculator.js"></script>
+
+    <!-- ✅ View Report Button Logic (standalone, does NOT touch calculator.js) -->
+    <script>
+        document.getElementById('view-report-btn').addEventListener('click', function () {
+            // Read current commodity filter from active button
+            const activeBtn = document.querySelector('.calculator-btn.active');
+            const commodity = activeBtn ? activeBtn.dataset.commodityFilter : 'All';
+
+            // Read checked stacks
+            const checkedStacks = Array.from(
+                document.querySelectorAll('.stack-calculator-checkbox:checked')
+            ).map(cb => cb.dataset.stack);
+
+            // Read inward / outward mode
+            const isInward  = document.getElementById('calculator-gross-checkbox').checked;
+            const isOutward = document.getElementById('calculator-outward-checkbox').checked;
+
+            // Save filters to localStorage
+            const filters = {
+                commodity,
+                stacks: checkedStacks,
+                isInward,
+                isOutward
+            };
+            localStorage.setItem('report_filters', JSON.stringify(filters));
+
+            // Open report page in new tab
+            window.open('report.html', '_blank');
+        });
+    </script>
 
 </body>
 </html>

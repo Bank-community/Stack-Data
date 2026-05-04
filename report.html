@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Report — Stack Calculator</title>
+
+    <link rel="icon" type="image/png" href="https://i.ibb.co/0wSg8RV/20250923-190600.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── HEADER ── */
+        .report-header {
+            background: linear-gradient(135deg, #312e81 0%, #4f46e5 60%, #6366f1 100%);
+            padding: 16px 18px 18px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 20px rgba(79,70,229,0.35);
+        }
+
+        .header-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            backdrop-filter: blur(4px);
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateX(-2px);
+        }
+
+        .export-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            background: rgba(255,255,255,0.92);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #312e81;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .export-btn:hover { background: #fff; transform: scale(1.02); }
+
+        .header-title {
+            color: #fff;
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 2px;
+        }
+        .header-subtitle {
+            color: #a5b4fc;
+            font-size: 0.72rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        /* ── STATS: Bags + MT inside header ── */
+        .header-stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .hstat {
+            flex: 1;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+        .hstat-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #c7d2fe;
+            margin-bottom: 3px;
+        }
+        .hstat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+        }
+        .hstat-unit {
+            font-size: 0.62rem;
+            font-weight: 600;
+            color: #a5b4fc;
+            margin-top: 2px;
+        }
+
+        /* ── FILTER PILLS ── */
+        .filter-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+        .filter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 11px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+        .pill-mode-in   { background: #d1fae5; color: #065f46; }
+        .pill-mode-out  { background: #fee2e2; color: #991b1b; }
+        .pill-mode-all  { background: rgba(255,255,255,0.18); color: #e0e7ff; border: 1px solid rgba(255,255,255,0.2); }
+        .pill-commodity { background: #fef3c7; color: #92400e; }
+        .pill-stacks    { background: #dcfce7; color: #166534; }
+        .pill-all-stacks{ background: rgba(255,255,255,0.13); color: #c7d2fe; }
+
+        /* ── TABLE AREA fills remaining screen ── */
+        .table-area {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+
+        thead { position: sticky; top: 0; z-index: 10; }
+        thead th {
+            background: #1e293b;
+            color: #94a3b8;
+            font-size: 0.67rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid #0f172a;
+            white-space: nowrap;
+        }
+        thead th.right { text-align: right; }
+
+        tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.1s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:nth-child(even) { background: #f8fafc; }
+        tbody tr:hover { background: #eef2ff; }
+
+        tbody td {
+            padding: 11px 16px;
+            color: #334155;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .date-main  { font-weight: 700; color: #0f172a; font-size: 0.85rem; }
+        .date-stack { font-size: 0.68rem; color: #94a3b8; margin-top: 2px; }
+
+        .commodity-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.71rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        .badge-wheat { background: #fef9c3; color: #854d0e; }
+        .badge-maize { background: #fce7f3; color: #9d174d; }
+        .badge-other { background: #f1f5f9; color: #475569; }
+
+        .type-dot {
+            display: inline-block;
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .dot-in  { background: #10b981; }
+        .dot-out { background: #ef4444; }
+
+        .made-up-tag {
+            font-size: 0.6rem;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+            font-weight: 700;
+            vertical-align: middle;
+        }
+
+        .num-cell {
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .mt-cell {
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: #4f46e5;
+        }
+
+        /* Total row — sticky at bottom of scroll area */
+        .total-row td {
+            background: #1e293b !important;
+            color: #f8fafc !important;
+            font-weight: 800;
+            border-top: 2px solid #0f172a;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+        }
+        .total-row:hover td { background: #1e293b !important; }
+        .total-label-cell {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8 !important;
+            text-align: left;
+        }
+        .total-bags-cell { color: #6ee7b7 !important; text-align: right; }
+        .total-mt-cell   { color: #a5b4fc !important; text-align: right; }
+
+        /* Empty + Loader */
+        .empty-state, .page-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            gap: 12px;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+        .empty-state h3 { font-size: 1rem; font-weight: 700; color: #475569; }
+        .empty-state p  { font-size: 0.85rem; }
+
+        .spin-ring {
+            width: 32px; height: 32px;
+            border: 3px solid #e0e7ff;
+            border-top-color: #4f46e5;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #no-cache-banner {
+            display: none;
+            margin: 16px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-size: 0.85rem;
+            color: #9a3412;
+            font-weight: 500;
+        }
+
+        .table-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .table-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <!-- ══════════ HEADER ══════════ -->
+    <header class="report-header">
+
+        <div class="header-top-row">
+            <!-- ✅ FIXED Back Button -->
+            <button class="back-btn" id="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Back to Calculator
+            </button>
+
+            <button class="export-btn" id="export-csv-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 3v12m0 0l-4-4m4 4l4-4M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2"/>
+                </svg>
+                Export CSV
+            </button>
+        </div>
+
+        <h1 class="header-title">Transaction Report</h1>
+        <p class="header-subtitle" id="report-subtitle">Loading...</p>
+
+        <!-- ✅ Bags + MT ONLY (2 stats inside header) -->
+        <div class="header-stats">
+            <div class="hstat">
+                <div class="hstat-label">Total Bags</div>
+                <div class="hstat-value" id="hstat-bags">—</div>
+                <div class="hstat-unit">bags</div>
+            </div>
+            <div class="hstat">
+                <div class="hstat-label">Total MT</div>
+                <div class="hstat-value" id="hstat-mt">—</div>
+                <div class="hstat-unit">metric tons</div>
+            </div>
+        </div>
+
+        <!-- Filter pills -->
+        <div class="filter-pills" id="filter-pills-container"></div>
+
+    </header>
+
+    <!-- ══════════ TABLE — Full remaining height ══════════ -->
+    <div class="table-area">
+
+        <div id="no-cache-banner">
+            ⚠️ No cached data found. Please open the main calculator first, let data load, then try again.
+        </div>
+
+        <div class="page-loader" id="page-loader">
+            <div class="spin-ring"></div>
+            <p style="font-size:0.85rem;font-weight:500;">Building report...</p>
+        </div>
+
+        <div class="table-scroll" id="table-scroll" style="display:none;">
+            <table id="report-table">
+                <thead>
+                    <tr>
+                        <th>Date / Stack</th>
+                        <th>Commodity</th>
+                        <th>Type</th>
+                        <th class="right">Bags</th>
+                        <th class="right">MT (Weight)</th>
+                    </tr>
+                </thead>
+                <tbody id="report-tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="empty-state" id="empty-state" style="display:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" fill="none"
+                viewBox="0 0 24 24" stroke="#cbd5e1" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 17v-2m3 2v-4m3 4v-6M4 6h16M4 10h16M4 14h6"/>
+            </svg>
+            <h3>No transactions found</h3>
+            <p>Adjust your filters on the main calculator and try again.</p>
+        </div>
+
+    </div>
+
+    <script src="report.js"></script>
+</body>
+</html>
