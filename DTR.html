@@ -379,11 +379,25 @@
             }
         });
 
+                // --- UPDATED WHATSAPP SHARE FUNCTIONALITY ---
         document.getElementById('whatsappShareBtn').addEventListener('click', () => {
             const text = reportEl.innerText;
-            if(!text) return;
-            const url = `whatsapp://send?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank');
+            
+            if (!text || text.trim() === "" || text.includes("Designing Beautiful Report...")) {
+                statusMsg.innerText = "✗ Report load hone ka intezar karein!";
+                statusMsg.classList.remove('text-green-600');
+                statusMsg.classList.add('text-red-600');
+                setTimeout(() => {
+                    statusMsg.innerText = "";
+                    statusMsg.classList.add('text-green-600');
+                    statusMsg.classList.remove('text-red-600');
+                }, 3000);
+                return;
+            }
+            
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+            window.open(whatsappUrl, '_blank');
+       
         });
 
     </script>
